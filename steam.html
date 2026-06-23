@@ -1,0 +1,654 @@
+ <!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mi Biblioteca Steam</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;700&display=swap');
+
+  :root {
+    --bg: #0d0f14;
+    --surface: #161922;
+    --surface2: #1e2330;
+    --border: #2a3040;
+    --accent: #4f9eff;
+    --accent2: #7c5cfc;
+    --green: #3ddc84;
+    --yellow: #f5c542;
+    --red: #ff5c5c;
+    --text: #e8eaf0;
+    --muted: #7a8399;
+    --card-hover: #242b3d;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: linear-gradient(135deg, #0d0f14 0%, #161d2e 50%, #0d1520 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 28px 32px 20px;
+    position: sticky; top: 0; z-index: 100;
+    backdrop-filter: blur(12px);
+  }
+
+  .header-top {
+    display: flex; align-items: center; gap: 16px; margin-bottom: 18px;
+  }
+
+  .steam-logo {
+    width: 38px; height: 38px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; flex-shrink: 0;
+  }
+
+  h1 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 22px; font-weight: 700;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .stats-bar {
+    display: flex; gap: 20px; font-size: 12px; color: var(--muted);
+    margin-bottom: 16px; flex-wrap: wrap;
+  }
+
+  .stats-bar span { display: flex; align-items: center; gap: 5px; }
+  .stats-bar b { color: var(--text); font-size: 13px; }
+
+  /* ── SEARCH & FILTERS ── */
+  .controls {
+    display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+  }
+
+  .search-wrap {
+    position: relative; flex: 1; min-width: 220px;
+  }
+
+  .search-wrap svg {
+    position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+    color: var(--muted); pointer-events: none;
+  }
+
+  #searchInput {
+    width: 100%; padding: 9px 12px 9px 38px;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); font-size: 14px;
+    outline: none; transition: border-color .2s;
+  }
+  #searchInput:focus { border-color: var(--accent); }
+  #searchInput::placeholder { color: var(--muted); }
+
+  .filter-btn {
+    padding: 8px 14px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--surface2); color: var(--muted); font-size: 13px;
+    cursor: pointer; transition: all .2s; white-space: nowrap;
+  }
+  .filter-btn:hover, .filter-btn.active {
+    border-color: var(--accent); color: var(--accent); background: rgba(79,158,255,.08);
+  }
+
+  /* ── GRID ── */
+  main { padding: 24px 32px; }
+
+  .result-info {
+    font-size: 13px; color: var(--muted); margin-bottom: 16px;
+  }
+  .result-info b { color: var(--text); }
+
+  .games-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 14px;
+  }
+
+  /* ── GAME CARD ── */
+  .game-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform .18s, border-color .18s, box-shadow .18s;
+    position: relative;
+  }
+  .game-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--accent);
+    box-shadow: 0 8px 28px rgba(79,158,255,.15);
+  }
+
+  .card-thumb {
+    width: 100%; height: 100px;
+    background: linear-gradient(135deg, var(--surface2), var(--border));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 32px; position: relative; overflow: hidden;
+  }
+
+  .card-thumb img {
+    width: 100%; height: 100%; object-fit: cover;
+    position: absolute; inset: 0;
+  }
+
+  .tier-badge {
+    position: absolute; top: 8px; right: 8px;
+    padding: 2px 7px; border-radius: 20px;
+    font-size: 10px; font-weight: 600; letter-spacing: .3px;
+  }
+  .tier-excellent { background: rgba(61,220,132,.2); color: var(--green); border: 1px solid rgba(61,220,132,.3); }
+  .tier-good      { background: rgba(245,197,66,.2);  color: var(--yellow); border: 1px solid rgba(245,197,66,.3); }
+  .tier-bad       { background: rgba(255,92,92,.2);   color: var(--red);   border: 1px solid rgba(255,92,92,.3); }
+  .tier-unrated   { background: rgba(122,131,153,.15); color: var(--muted); border: 1px solid rgba(122,131,153,.2); }
+
+  .card-body { padding: 10px 12px 12px; }
+
+  .card-title {
+    font-size: 13px; font-weight: 600; line-height: 1.35;
+    margin-bottom: 6px;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .card-genre {
+    font-size: 11px; color: var(--muted); margin-bottom: 8px;
+  }
+
+  .card-score {
+    display: flex; align-items: center; gap: 6px;
+  }
+
+  .stars { display: flex; gap: 2px; }
+  .star { font-size: 11px; }
+  .star.filled { color: var(--yellow); }
+  .star.empty  { color: var(--border); }
+
+  .score-num {
+    font-size: 12px; font-weight: 700; color: var(--yellow);
+  }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,.75); z-index: 1000;
+    align-items: center; justify-content: center;
+    padding: 20px; backdrop-filter: blur(4px);
+  }
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    width: 100%; max-width: 620px;
+    max-height: 88vh; overflow-y: auto;
+    position: relative;
+    animation: modalIn .2s ease;
+  }
+
+  @keyframes modalIn {
+    from { opacity: 0; transform: scale(.94) translateY(12px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  .modal-header {
+    padding: 22px 22px 0;
+    display: flex; align-items: flex-start; gap: 14px;
+  }
+
+  .modal-icon {
+    width: 64px; height: 64px; border-radius: 12px; flex-shrink: 0;
+    background: linear-gradient(135deg, var(--surface2), var(--border));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px; overflow: hidden;
+  }
+  .modal-icon img { width: 100%; height: 100%; object-fit: cover; }
+
+  .modal-title-block { flex: 1; }
+
+  .modal-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 20px; font-weight: 700; line-height: 1.2;
+    margin-bottom: 6px;
+  }
+
+  .modal-tags {
+    display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 4px;
+  }
+
+  .tag {
+    padding: 3px 9px; border-radius: 20px;
+    font-size: 11px; font-weight: 500;
+    background: var(--surface2); border: 1px solid var(--border);
+    color: var(--muted);
+  }
+  .tag.genre-tag { color: var(--accent); border-color: rgba(79,158,255,.3); background: rgba(79,158,255,.08); }
+
+  .modal-close {
+    position: absolute; top: 14px; right: 14px;
+    background: var(--surface2); border: 1px solid var(--border);
+    width: 30px; height: 30px; border-radius: 8px;
+    cursor: pointer; color: var(--muted); font-size: 16px;
+    display: flex; align-items: center; justify-content: center;
+    transition: color .2s;
+  }
+  .modal-close:hover { color: var(--text); }
+
+  .modal-body { padding: 20px 22px 24px; }
+
+  .modal-score-row {
+    display: flex; align-items: center; gap: 16px;
+    padding: 14px 16px; background: var(--surface2);
+    border-radius: 10px; margin-bottom: 16px; border: 1px solid var(--border);
+  }
+
+  .big-score {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 38px; font-weight: 700; color: var(--yellow);
+    line-height: 1;
+  }
+
+  .score-details { flex: 1; }
+  .score-label { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+
+  .score-bar-wrap {
+    height: 6px; background: var(--border); border-radius: 3px; overflow: hidden;
+  }
+  .score-bar { height: 100%; border-radius: 3px; transition: width 1s ease; }
+
+  .verdict {
+    font-size: 13px; font-weight: 600; color: var(--green); margin-top: 4px;
+  }
+
+  .fps-badge {
+    text-align: center;
+  }
+  .fps-value {
+    font-size: 13px; font-weight: 700; padding: 4px 10px;
+    border-radius: 6px; display: inline-block;
+  }
+  .fps-label { font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+  .modal-description {
+    font-size: 14px; line-height: 1.7; color: #c8cdd8;
+    margin-bottom: 16px; min-height: 80px;
+  }
+
+  .modal-highlights {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+    margin-top: 12px;
+  }
+
+  .highlight-item {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 12px;
+  }
+  .highlight-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 3px; }
+  .highlight-value { font-size: 13px; font-weight: 600; color: var(--text); }
+
+  .perf-section {
+    margin-top: 14px; padding: 12px 14px;
+    background: rgba(79,158,255,.06); border: 1px solid rgba(79,158,255,.15);
+    border-radius: 10px;
+  }
+  .perf-title { font-size: 11px; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; }
+  .perf-text { font-size: 13px; color: #a0a8bb; line-height: 1.5; }
+
+  /* ── EMPTY STATE ── */
+  .empty-state {
+    text-align: center; padding: 60px 20px; color: var(--muted);
+  }
+  .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+  .empty-state p { font-size: 15px; }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+  @media (max-width: 600px) {
+    header, main { padding-left: 16px; padding-right: 16px; }
+    .games-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+    .modal-highlights { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-top">
+    <div class="steam-logo">🎮</div>
+    <div>
+      <h1>Mi Biblioteca Steam</h1>
+      <div style="font-size:12px;color:var(--muted);margin-top:2px">Rendimiento en AMD Ryzen 5 3400G · Vega 11 · 16GB DDR4</div>
+    </div>
+  </div>
+
+  <div class="stats-bar">
+    <span>🎮 <b id="totalCount">375</b> juegos</span>
+    <span>✅ <b>60+ FPS</b> en muchos títulos</span>
+    <span>⚠️ <b>30-60 FPS</b> ajustes bajos</span>
+    <span>❌ <b>&lt;30 FPS</b> injugable</span>
+  </div>
+
+  <div class="controls">
+    <div class="search-wrap">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input id="searchInput" type="text" placeholder="Buscar juego...">
+    </div>
+    <button class="filter-btn active" data-filter="all">Todos</button>
+    <button class="filter-btn" data-filter="excellent">✅ 60+ FPS</button>
+    <button class="filter-btn" data-filter="good">⚠️ 30-60 FPS</button>
+    <button class="filter-btn" data-filter="bad">❌ Injugable</button>
+    <button class="filter-btn" data-filter="unrated">Sin datos</button>
+  </div>
+</header>
+
+<main>
+  <div class="result-info" id="resultInfo"></div>
+  <div class="games-grid" id="gamesGrid"></div>
+  <div class="empty-state" id="emptyState" style="display:none">
+    <div class="icon">🔍</div>
+    <p>No se encontraron juegos con ese criterio</p>
+  </div>
+</main>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="modal">
+    <button class="modal-close" id="modalClose">✕</button>
+    <div class="modal-header">
+      <div class="modal-icon" id="modalIcon">🎮</div>
+      <div class="modal-title-block">
+        <div class="modal-title" id="modalTitle">—</div>
+        <div class="modal-tags" id="modalTags"></div>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div class="modal-score-row">
+        <div class="big-score" id="modalScore">—</div>
+        <div class="score-details">
+          <div class="score-label">Puntaje Estimado</div>
+          <div class="score-bar-wrap">
+            <div class="score-bar" id="scoreBar" style="width:0%"></div>
+          </div>
+          <div class="verdict" id="modalVerdict"></div>
+        </div>
+        <div class="fps-badge">
+          <div class="fps-value" id="fpsBadge">—</div>
+          <div class="fps-label">en tu PC</div>
+        </div>
+      </div>
+
+      <div id="modalContent"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const GAMES = [
+  { name: "Left 4 Dead", tier: "excellent", fps: "80-110 FPS", genre: "Terror / Co-op", emoji: "🧟" },
+  { name: "Left 4 Dead 2", tier: "excellent", fps: "80-110 FPS", genre: "Terror / Co-op", emoji: "🧟" },
+  { name: "Pacify", tier: "excellent", fps: "60 FPS", genre: "Terror", emoji: "👻" },
+  { name: "Dollmare", tier: "excellent", fps: "60+ FPS", genre: "Terror / Indie", emoji: "🪆" },
+  { name: "Ultimate Custom Night", tier: "excellent", fps: "60+ FPS", genre: "Terror", emoji: "🐻" },
+  { name: "Don't Starve Together", tier: "excellent", fps: "60+ FPS", genre: "Supervivencia / Co-op", emoji: "🌲" },
+  { name: "BioShock Remastered", tier: "excellent", fps: "60+ FPS", genre: "FPS / RPG", emoji: "🔫" },
+  { name: "BioShock 2 Remastered", tier: "excellent", fps: "60+ FPS", genre: "FPS / RPG", emoji: "🔫" },
+  { name: "BioShock Infinite", tier: "excellent", fps: "65-75 FPS", genre: "FPS / Narrativa", emoji: "⚡" },
+  { name: "Fallout: New Vegas", tier: "excellent", fps: "60+ FPS", genre: "RPG / Acción", emoji: "☢️" },
+  { name: "Undertale", tier: "excellent", fps: "Perfecto", genre: "RPG / Indie", emoji: "❤️" },
+  { name: "Beyond: Two Souls", tier: "excellent", fps: "60 FPS", genre: "Aventura Narrativa", emoji: "👁️" },
+  { name: "Assetto Corsa", tier: "excellent", fps: "65-80 FPS", genre: "Simulador", emoji: "🏎️" },
+  { name: "Automobilista", tier: "excellent", fps: "60+ FPS", genre: "Simulador", emoji: "🏁" },
+  { name: "FlatOut", tier: "excellent", fps: "1080p maximum", genre: "Carreras", emoji: "💥" },
+  { name: "FlatOut 2", tier: "excellent", fps: "1080p maximum", genre: "Carreras", emoji: "💥" },
+  { name: "FlatOut: Ultimate Carnage", tier: "excellent", fps: "60+ FPS", genre: "Carreras", emoji: "💥" },
+  { name: "Drift86", tier: "excellent", fps: "60+ FPS", genre: "Carreras / Drift", emoji: "🚗" },
+  { name: "Barro", tier: "excellent", fps: "60+ FPS", genre: "Carreras", emoji: "🏎️" },
+  { name: "Barro F", tier: "excellent", fps: "60+ FPS", genre: "Carreras", emoji: "🏎️" },
+  { name: "Team Fortress 2", tier: "excellent", fps: "90+ FPS", genre: "Shooter / Hero", emoji: "🎩" },
+  { name: "Half-Life 2", tier: "excellent", fps: "90+ FPS", genre: "FPS / Narrativa", emoji: "🔧" },
+  { name: "Call of Duty 4: Modern Warfare", tier: "excellent", fps: "80+ FPS", genre: "Shooter Táctico", emoji: "🪖" },
+  { name: "Age of Empires II: Definitive Edition", tier: "excellent", fps: "60+ FPS", genre: "Estrategia RTS", emoji: "⚔️" },
+  { name: "Battlestar Galactica Deadlock", tier: "excellent", fps: "60+ FPS", genre: "Estrategia Naval", emoji: "🚀" },
+  { name: "Field of Glory II: Medieval", tier: "excellent", fps: "60+ FPS", genre: "Estrategia por turnos", emoji: "🏰" },
+  { name: "The Binding of Isaac: Rebirth", tier: "excellent", fps: "60 FPS", genre: "Roguelike", emoji: "😢" },
+  { name: "Dead Cells", tier: "excellent", fps: "60 FPS", genre: "Roguelike / Metroidvania", emoji: "⚔️" },
+  { name: "Cuphead", tier: "excellent", fps: "60 FPS", genre: "Plataformas / Boss Rush", emoji: "☕" },
+  { name: "Enter the Gungeon", tier: "excellent", fps: "60+ FPS", genre: "Roguelike / Shoot'em up", emoji: "🔫" },
+  { name: "Pizza Tower", tier: "excellent", fps: "60+ FPS", genre: "Plataformas / Indie", emoji: "🍕" },
+  { name: "Geometry Dash", tier: "excellent", fps: "60+ FPS", genre: "Ritmo / Plataformas", emoji: "📐" },
+  { name: "Stardew Valley", tier: "excellent", fps: "60+ FPS", genre: "Simulador / Farming", emoji: "🌾" },
+  { name: "Garry's Mod", tier: "excellent", fps: "60+ FPS", genre: "Sandbox", emoji: "🔨" },
+  { name: "House Flipper", tier: "excellent", fps: "60+ FPS", genre: "Simulador", emoji: "🏠" },
+  { name: "Chill Corner", tier: "excellent", fps: "60+ FPS", genre: "Casual / Relajante", emoji: "☕" },
+  { name: "My dream setup", tier: "excellent", fps: "60+ FPS", genre: "Simulador / Casual", emoji: "💻" },
+  { name: "7 Days to Die", tier: "good", fps: "40-60 FPS", genre: "Supervivencia / Terror", emoji: "🧟" },
+  { name: "Phasmophobia", tier: "good", fps: "45-55 FPS", genre: "Terror / Co-op", emoji: "👻" },
+  { name: "The Forest", tier: "good", fps: "45-55 FPS", genre: "Supervivencia / Terror", emoji: "🌲" },
+  { name: "Sons of the Forest", tier: "good", fps: "38-48 FPS", genre: "Supervivencia / Terror", emoji: "🌲" },
+  { name: "Resident Evil Village", tier: "good", fps: "38-45 FPS", genre: "Survival Horror", emoji: "🏰" },
+  { name: "Outlast", tier: "good", fps: "45-50 FPS", genre: "Terror / Sigilo", emoji: "📷" },
+  { name: "Outlast 2", tier: "good", fps: "45-50 FPS", genre: "Terror / Sigilo", emoji: "📷" },
+  { name: "Lethal Company", tier: "good", fps: "50-60 FPS", genre: "Terror / Co-op", emoji: "🏭" },
+  { name: "Five Nights at Freddy's: Security Breach", tier: "good", fps: "30-45 FPS", genre: "Terror", emoji: "🐻" },
+  { name: "The Elder Scrolls V: Skyrim Special Edition", tier: "good", fps: "45-55 FPS", genre: "RPG de Acción", emoji: "🐉" },
+  { name: "Fallout 4", tier: "good", fps: "35-45 FPS", genre: "RPG de Acción", emoji: "☢️" },
+  { name: "Kingdom Come: Deliverance", tier: "good", fps: "35-40 FPS", genre: "RPG Histórico", emoji: "⚔️" },
+  { name: "Assassin's Creed Origins", tier: "good", fps: "35-40 FPS", genre: "Acción / Aventura", emoji: "🏺" },
+  { name: "Forza Horizon 4", tier: "good", fps: "48-55 FPS", genre: "Carreras / Open World", emoji: "🏎️" },
+  { name: "BeamNG.drive", tier: "good", fps: "40-50 FPS", genre: "Simulador de Física", emoji: "💥" },
+  { name: "Euro Truck Simulator 2", tier: "good", fps: "40-60 FPS", genre: "Simulador", emoji: "🚛" },
+  { name: "American Truck Simulator", tier: "good", fps: "50-60 FPS", genre: "Simulador", emoji: "🚛" },
+  { name: "DiRT Rally 2.0", tier: "good", fps: "45-50 FPS", genre: "Rally / Simulador", emoji: "🏁" },
+  { name: "Automobilista 2", tier: "good", fps: "45-50 FPS", genre: "Simulador", emoji: "🏎️" },
+  { name: "MudRunner", tier: "good", fps: "45-55 FPS", genre: "Simulador Off-Road", emoji: "🚜" },
+  { name: "Counter-Strike 2", tier: "good", fps: "55-75 FPS", genre: "Shooter Táctico", emoji: "💣" },
+  { name: "Apex Legends", tier: "good", fps: "45-55 FPS", genre: "Battle Royale / FPS", emoji: "🎯" },
+  { name: "Borderlands 3", tier: "good", fps: "45-55 FPS", genre: "Looter Shooter", emoji: "🔫" },
+  { name: "Call of Duty: Black Ops", tier: "good", fps: "45-60 FPS", genre: "Shooter", emoji: "🪖" },
+  { name: "Arena Breakout: Infinite", tier: "good", fps: "40-50 FPS", genre: "Shooter Táctico", emoji: "🎯" },
+  { name: "Project Zomboid", tier: "good", fps: "30-60 FPS", genre: "Supervivencia / Zombis", emoji: "🧟" },
+  { name: "Cities: Skylines", tier: "good", fps: "~35 FPS", genre: "Simulador Urbano", emoji: "🏙️" },
+  { name: "Company of Heroes 2", tier: "good", fps: "40-50 FPS", genre: "Estrategia RTS", emoji: "🎖️" },
+  { name: "Jurassic World Evolution 2", tier: "good", fps: "40-50 FPS", genre: "Gestión / Simulador", emoji: "🦕" },
+  { name: "Dark Souls III", tier: "good", fps: "40-45 FPS", genre: "Souls-like / Acción", emoji: "💀" },
+  { name: "Dark Souls II: Scholar of the First Sin", tier: "good", fps: "50-55 FPS", genre: "Souls-like / Acción", emoji: "💀" },
+  { name: "Dying Light", tier: "good", fps: "40-50 FPS", genre: "Acción / Zombis / Parkour", emoji: "🧟" },
+  { name: "METAL GEAR RISING: REVENGEANCE", tier: "good", fps: "55-60 FPS", genre: "Acción / Hack and Slash", emoji: "⚔️" },
+  { name: "Cyberpunk 2077", tier: "bad", fps: "24-28 FPS", genre: "RPG de Acción / Open World", emoji: "🌆" },
+  { name: "Baldur's Gate 3", tier: "bad", fps: "25 FPS", genre: "RPG por Turnos", emoji: "🎲" },
+  { name: "Hogwarts Legacy", tier: "bad", fps: "20-25 FPS", genre: "RPG de Acción", emoji: "🪄" },
+  { name: "Ghost of Tsushima", tier: "bad", fps: "<30 FPS", genre: "Acción / Aventura", emoji: "⛩️" },
+  { name: "No Man's Sky", tier: "bad", fps: "<25 FPS", genre: "Exploración / Sci-Fi", emoji: "🚀" }
+];
+
+let currentFilter = "all";
+let currentSearch = "";
+
+function renderGrid() {
+  const grid = document.getElementById('gamesGrid');
+  const empty = document.getElementById('emptyState');
+  const info = document.getElementById('resultInfo');
+  
+  let filtered = GAMES.filter(g => {
+    const matchesFilter = currentFilter === 'all' || g.tier === currentFilter;
+    const matchesSearch = g.name.toLowerCase().includes(currentSearch.toLowerCase()) || 
+                          g.genre.toLowerCase().includes(currentSearch.toLowerCase());
+    return matchesFilter && matchesSearch;
+  });
+
+  grid.innerHTML = '';
+  
+  if (filtered.length === 0) {
+    empty.style.display = 'block';
+    info.innerHTML = 'Mostrando <b>0</b> juegos';
+    return;
+  }
+  
+  empty.style.display = 'none';
+  info.innerHTML = `Mostrando <b>${filtered.length}</b> juegos`;
+
+  filtered.forEach(game => {
+    const card = document.createElement('div');
+    card.className = 'game-card';
+    card.onclick = () => openModal(game.name);
+    
+    let label = "Sin Datos";
+    if (game.tier === 'excellent') label = "60+ FPS";
+    if (game.tier === 'good') label = "30-60 FPS";
+    if (game.tier === 'bad') label = "Injugable";
+
+    card.innerHTML = `
+      <div class="card-thumb">
+        <span>${game.emoji || '🎮'}</span>
+        <span class="tier-badge tier-${game.tier}">${label}</span>
+      </div>
+      <div class="card-body">
+        <div class="card-title">${game.name}</div>
+        <div class="card-genre">${game.genre}</div>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function openModal(name) {
+  const game = GAMES.find(g => g.name === name);
+  if (!game) return;
+
+  const modalOverlay = document.getElementById('modalOverlay');
+  const modalContent = document.getElementById('modalContent');
+  
+  document.getElementById('modalTitle').textContent = game.name;
+  document.getElementById('modalIcon').textContent = game.emoji || "🎮";
+  
+  let score = "8.5";
+  let verdict = "Muy Bueno";
+  let scorePercent = 85;
+  let perfText = `El juego se ejecuta establemente a una tasa de ${game.fps}.`;
+  let perfColor = 'rgba(61,220,132,.06)';
+  let perfBorder = 'rgba(61,220,132,.15)';
+
+  if (game.tier === "excellent") { 
+    score = "9.2"; verdict = "Excelente Rendimiento"; scorePercent = 92; 
+    perfText = `Excelente optimización. Tu procesador AMD Ryzen 5 3400G lo corre fluidamente a más de 60 FPS sin problemas notables.`;
+  } else if (game.tier === "good") { 
+    score = "7.5"; verdict = "Rendimiento Aceptable"; scorePercent = 75; 
+    perfText = `Rendimiento jugable en configuraciones medias-bajas. Se mantiene en un rango óptimo de 30 a 60 FPS.`;
+    perfColor = 'rgba(245,197,66,.06)';
+    perfBorder = 'rgba(245,197,66,.15)';
+  } else if (game.tier === "bad") { 
+    score = "4.0"; verdict = "Mal Rendimiento / Injugable"; scorePercent = 40; 
+    perfText = `Demasiado exigente para los gráficos integrados Vega 11. El juego corre a menos de 30 FPS, se recomienda una tarjeta gráfica dedicada.`;
+    perfColor = 'rgba(255,92,92,.06)';
+    perfBorder = 'rgba(255,92,92,.15)';
+  } else { 
+    score = "N/D"; verdict = "Sin datos de la comunidad"; scorePercent = 0; 
+    perfText = `No hay datos específicos de rendimiento recolectados todavía para este título.`;
+    perfColor = 'rgba(122,131,153,.06)';
+    perfBorder = 'rgba(122,131,153,.15)';
+  }
+
+  document.getElementById('modalScore').textContent = score;
+  document.getElementById('modalVerdict').textContent = verdict;
+  document.getElementById('scoreBar').style.width = scorePercent + "%";
+  
+  const fpsBadge = document.getElementById('fpsBadge');
+  fpsBadge.textContent = game.fps;
+  
+  if (game.tier === 'excellent') {
+    fpsBadge.style.background = 'rgba(61,220,132,.2)';
+    fpsBadge.style.color = 'var(--green)';
+  } else if (game.tier === 'good') {
+    fpsBadge.style.background = 'rgba(245,197,66,.2)';
+    fpsBadge.style.color = 'var(--yellow)';
+  } else if (game.tier === 'bad') {
+    fpsBadge.style.background = 'rgba(255,92,92,.2)';
+    fpsBadge.style.color = 'var(--red)';
+  } else {
+    fpsBadge.style.background = 'rgba(122,131,153,.15)';
+    fpsBadge.style.color = 'var(--muted)';
+  }
+
+  const tagsContainer = document.getElementById('modalTags');
+  tagsContainer.innerHTML = '';
+  game.genre.split('/').forEach(g => {
+    const tag = document.createElement('span');
+    tag.className = 'tag genre-tag';
+    tag.textContent = g.trim();
+    tagsContainer.appendChild(tag);
+  });
+
+  modalContent.innerHTML = `
+    <div class="modal-description">
+      Información sobre <b>${game.name}</b>. Este juego pertenece a la categoría de ${game.genre}. 
+      En base a las pruebas de hardware documentadas para configuraciones con gráficos integrados, las estimaciones sugieren una jugabilidad adecuada según tu perfil técnico.
+    </div>
+    <div class="modal-highlights">
+      <div class="highlight-item">
+        <div class="highlight-label">Categoría de Fluidez</div>
+        <div class="highlight-value" style="color: ${game.tier==='excellent'?'var(--green)':game.tier==='good'?'var(--yellow)':game.tier==='bad'?'var(--red)':'var(--muted)'}">
+          ${game.tier.toUpperCase()}
+        </div>
+      </div>
+      <div class="highlight-item">
+        <div class="highlight-label">Optimización Estimada</div>
+        <div class="highlight-value">${game.tier === 'bad' ? 'Baja / Exige GPU dedicada' : 'Estable para Integrados'}</div>
+      </div>
+    </div>
+    <div class="perf-section" style="background:${perfColor}; border-color:${perfBorder}">
+      <div class="perf-title">🖥️ Rendimiento en tu PC</div>
+      <div class="perf-text">${perfText}</div>
+    </div>
+  `;
+
+  modalOverlay.classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+}
+
+// ── EVENTS ────────────────────────────────────────────
+document.getElementById('modalClose').addEventListener('click', closeModal);
+document.getElementById('modalOverlay').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeModal();
+});
+
+document.getElementById('searchInput').addEventListener('input', e => {
+  currentSearch = e.target.value;
+  renderGrid();
+});
+
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentFilter = btn.dataset.filter;
+    renderGrid();
+  });
+});
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+});
+
+// ── INIT ─────────────────────────────────────────────
+document.getElementById('totalCount').textContent = GAMES.length;
+renderGrid();
+</script>
+</body>
+</html>
