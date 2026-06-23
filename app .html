@@ -1,0 +1,1101 @@
+<meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mi Biblioteca Steam</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;700&display=swap');
+
+  :root {
+    --bg: #0d0f14;
+    --surface: #161922;
+    --surface2: #1e2330;
+    --border: #2a3040;
+    --accent: #4f9eff;
+    --accent2: #7c5cfc;
+    --green: #3ddc84;
+    --yellow: #f5c542;
+    --red: #ff5c5c;
+    --text: #e8eaf0;
+    --muted: #7a8399;
+    --card-hover: #242b3d;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: linear-gradient(135deg, #0d0f14 0%, #161d2e 50%, #0d1520 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 28px 32px 20px;
+    position: sticky; top: 0; z-index: 100;
+    backdrop-filter: blur(12px);
+  }
+
+  .header-top {
+    display: flex; align-items: center; gap: 16px; margin-bottom: 18px;
+  }
+
+  .steam-logo {
+    width: 38px; height: 38px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; flex-shrink: 0;
+  }
+
+  h1 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 22px; font-weight: 700;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .stats-bar {
+    display: flex; gap: 20px; font-size: 12px; color: var(--muted);
+    margin-bottom: 16px; flex-wrap: wrap;
+  }
+
+  .stats-bar span { display: flex; align-items: center; gap: 5px; }
+  .stats-bar b { color: var(--text); font-size: 13px; }
+
+  /* ── SEARCH & FILTERS ── */
+  .controls {
+    display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+  }
+
+  .search-wrap {
+    position: relative; flex: 1; min-width: 220px;
+  }
+
+  .search-wrap svg {
+    position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+    color: var(--muted); pointer-events: none;
+  }
+
+  #searchInput {
+    width: 100%; padding: 9px 12px 9px 38px;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); font-size: 14px;
+    outline: none; transition: border-color .2s;
+  }
+  #searchInput:focus { border-color: var(--accent); }
+  #searchInput::placeholder { color: var(--muted); }
+
+  .filter-btn {
+    padding: 8px 14px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--surface2); color: var(--muted); font-size: 13px;
+    cursor: pointer; transition: all .2s; white-space: nowrap;
+  }
+  .filter-btn:hover, .filter-btn.active {
+    border-color: var(--accent); color: var(--accent); background: rgba(79,158,255,.08);
+  }
+
+  /* ── GRID ── */
+  main { padding: 24px 32px; }
+
+  .result-info {
+    font-size: 13px; color: var(--muted); margin-bottom: 16px;
+  }
+  .result-info b { color: var(--text); }
+
+  .games-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 14px;
+  }
+
+  /* ── GAME CARD ── */
+  .game-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform .18s, border-color .18s, box-shadow .18s;
+    position: relative;
+  }
+  .game-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--accent);
+    box-shadow: 0 8px 28px rgba(79,158,255,.15);
+  }
+
+  .card-thumb {
+    width: 100%; height: 100px;
+    background: linear-gradient(135deg, var(--surface2), var(--border));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 32px; position: relative; overflow: hidden;
+  }
+
+  .card-thumb img {
+    width: 100%; height: 100%; object-fit: cover;
+    position: absolute; inset: 0;
+  }
+
+  .tier-badge {
+    position: absolute; top: 8px; right: 8px;
+    padding: 2px 7px; border-radius: 20px;
+    font-size: 10px; font-weight: 600; letter-spacing: .3px;
+  }
+  .tier-excellent { background: rgba(61,220,132,.2); color: var(--green); border: 1px solid rgba(61,220,132,.3); }
+  .tier-good      { background: rgba(245,197,66,.2);  color: var(--yellow); border: 1px solid rgba(245,197,66,.3); }
+  .tier-bad       { background: rgba(255,92,92,.2);   color: var(--red);   border: 1px solid rgba(255,92,92,.3); }
+  .tier-unrated   { background: rgba(122,131,153,.15); color: var(--muted); border: 1px solid rgba(122,131,153,.2); }
+
+  .card-body { padding: 10px 12px 12px; }
+
+  .card-title {
+    font-size: 13px; font-weight: 600; line-height: 1.35;
+    margin-bottom: 6px;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .card-genre {
+    font-size: 11px; color: var(--muted); margin-bottom: 8px;
+  }
+
+  .card-score {
+    display: flex; align-items: center; gap: 6px;
+  }
+
+  .stars { display: flex; gap: 2px; }
+  .star { font-size: 11px; }
+  .star.filled { color: var(--yellow); }
+  .star.empty  { color: var(--border); }
+
+  .score-num {
+    font-size: 12px; font-weight: 700; color: var(--yellow);
+  }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,.75); z-index: 1000;
+    align-items: center; justify-content: center;
+    padding: 20px; backdrop-filter: blur(4px);
+  }
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    width: 100%; max-width: 620px;
+    max-height: 88vh; overflow-y: auto;
+    position: relative;
+    animation: modalIn .2s ease;
+  }
+
+  @keyframes modalIn {
+    from { opacity: 0; transform: scale(.94) translateY(12px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  .modal-header {
+    padding: 22px 22px 0;
+    display: flex; align-items: flex-start; gap: 14px;
+  }
+
+  .modal-icon {
+    width: 64px; height: 64px; border-radius: 12px; flex-shrink: 0;
+    background: linear-gradient(135deg, var(--surface2), var(--border));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px; overflow: hidden;
+  }
+  .modal-icon img { width: 100%; height: 100%; object-fit: cover; }
+
+  .modal-title-block { flex: 1; }
+
+  .modal-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 20px; font-weight: 700; line-height: 1.2;
+    margin-bottom: 6px;
+  }
+
+  .modal-tags {
+    display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 4px;
+  }
+
+  .tag {
+    padding: 3px 9px; border-radius: 20px;
+    font-size: 11px; font-weight: 500;
+    background: var(--surface2); border: 1px solid var(--border);
+    color: var(--muted);
+  }
+  .tag.genre-tag { color: var(--accent); border-color: rgba(79,158,255,.3); background: rgba(79,158,255,.08); }
+
+  .modal-close {
+    position: absolute; top: 14px; right: 14px;
+    background: var(--surface2); border: 1px solid var(--border);
+    width: 30px; height: 30px; border-radius: 8px;
+    cursor: pointer; color: var(--muted); font-size: 16px;
+    display: flex; align-items: center; justify-content: center;
+    transition: color .2s;
+  }
+  .modal-close:hover { color: var(--text); }
+
+  .modal-body { padding: 20px 22px 24px; }
+
+  .modal-score-row {
+    display: flex; align-items: center; gap: 16px;
+    padding: 14px 16px; background: var(--surface2);
+    border-radius: 10px; margin-bottom: 16px; border: 1px solid var(--border);
+  }
+
+  .big-score {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 38px; font-weight: 700; color: var(--yellow);
+    line-height: 1;
+  }
+
+  .score-details { flex: 1; }
+  .score-label { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+
+  .score-bar-wrap {
+    height: 6px; background: var(--border); border-radius: 3px; overflow: hidden;
+  }
+  .score-bar { height: 100%; border-radius: 3px; transition: width 1s ease; }
+
+  .verdict {
+    font-size: 13px; font-weight: 600; color: var(--green); margin-top: 4px;
+  }
+
+  .fps-badge {
+    text-align: center;
+  }
+  .fps-value {
+    font-size: 13px; font-weight: 700; padding: 4px 10px;
+    border-radius: 6px; display: inline-block;
+  }
+  .fps-label { font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+  .modal-description {
+    font-size: 14px; line-height: 1.7; color: #c8cdd8;
+    margin-bottom: 16px; min-height: 80px;
+  }
+
+  .loading-state {
+    display: flex; align-items: center; gap: 10px;
+    color: var(--muted); font-size: 14px; padding: 20px 0;
+  }
+
+  .spinner {
+    width: 18px; height: 18px; border-radius: 50%;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    animation: spin .7s linear infinite; flex-shrink: 0;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .modal-highlights {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+    margin-top: 12px;
+  }
+
+  .highlight-item {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 12px;
+  }
+  .highlight-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 3px; }
+  .highlight-value { font-size: 13px; font-weight: 600; color: var(--text); }
+
+  .perf-section {
+    margin-top: 14px; padding: 12px 14px;
+    background: rgba(79,158,255,.06); border: 1px solid rgba(79,158,255,.15);
+    border-radius: 10px;
+  }
+  .perf-title { font-size: 11px; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; }
+  .perf-text { font-size: 13px; color: #a0a8bb; line-height: 1.5; }
+
+  /* ── EMPTY STATE ── */
+  .empty-state {
+    text-align: center; padding: 60px 20px; color: var(--muted);
+  }
+  .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+  .empty-state p { font-size: 15px; }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+  @media (max-width: 600px) {
+    header, main { padding-left: 16px; padding-right: 16px; }
+    .games-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+    .modal-highlights { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-top">
+    <div class="steam-logo">🎮</div>
+    <div>
+      <h1>Mi Biblioteca Steam</h1>
+      <div style="font-size:12px;color:var(--muted);margin-top:2px">Rendimiento en AMD Ryzen 5 3400G · Vega 11 · 16GB DDR4</div>
+    </div>
+  </div>
+
+  <div class="stats-bar">
+    <span>🎮 <b id="totalCount">375</b> juegos</span>
+    <span>✅ <b>60+ FPS</b> en muchos títulos</span>
+    <span>⚠️ <b>30-60 FPS</b> ajustes bajos</span>
+    <span>❌ <b>&lt;30 FPS</b> injugable</span>
+  </div>
+
+  <div class="controls">
+    <div class="search-wrap">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input id="searchInput" type="text" placeholder="Buscar juego...">
+    </div>
+    <button class="filter-btn active" data-filter="all">Todos</button>
+    <button class="filter-btn" data-filter="excellent">✅ 60+ FPS</button>
+    <button class="filter-btn" data-filter="good">⚠️ 30-60 FPS</button>
+    <button class="filter-btn" data-filter="bad">❌ Injugable</button>
+    <button class="filter-btn" data-filter="unrated">Sin datos</button>
+  </div>
+</header>
+
+<main>
+  <div class="result-info" id="resultInfo"></div>
+  <div class="games-grid" id="gamesGrid"></div>
+  <div class="empty-state" id="emptyState" style="display:none">
+    <div class="icon">🔍</div>
+    <p>No se encontraron juegos con ese criterio</p>
+  </div>
+</main>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="modal">
+    <button class="modal-close" id="modalClose">✕</button>
+    <div class="modal-header">
+      <div class="modal-icon" id="modalIcon">🎮</div>
+      <div class="modal-title-block">
+        <div class="modal-title" id="modalTitle">--</div>
+        <div class="modal-tags" id="modalTags"></div>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div class="modal-score-row">
+        <div class="big-score" id="modalScore">--</div>
+        <div class="score-details">
+          <div class="score-label">Puntaje de la comunidad</div>
+          <div class="score-bar-wrap">
+            <div class="score-bar" id="scoreBar" style="width:0%"></div>
+          </div>
+          <div class="verdict" id="modalVerdict"></div>
+        </div>
+        <div class="fps-badge">
+          <div class="fps-value" id="fpsBadge">--</div>
+          <div class="fps-label">en tu PC</div>
+        </div>
+      </div>
+
+      <div id="modalContent">
+        <div class="loading-state">
+          <div class="spinner"></div>
+          Cargando información del juego...
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════
+// DATOS DE JUEGOS
+// ══════════════════════════════════════════════════════
+const GAMES = [
+  // ─── 60+ FPS ─────────────────────────────────────
+  { name: "Left 4 Dead", tier: "excellent", fps: "80-110 FPS", genre: "Terror / Co-op", emoji: "🧟" },
+  { name: "Left 4 Dead 2", tier: "excellent", fps: "80-110 FPS", genre: "Terror / Co-op", emoji: "🧟" },
+  { name: "Pacify", tier: "excellent", fps: "60 FPS", genre: "Terror", emoji: "👻" },
+  { name: "Dollmare", tier: "excellent", fps: "60+ FPS", genre: "Terror / Indie", emoji: "🪆" },
+  { name: "Ultimate Custom Night", tier: "excellent", fps: "60+ FPS", genre: "Terror", emoji: "🐻" },
+  { name: "Don't Starve Together", tier: "excellent", fps: "60+ FPS", genre: "Supervivencia / Co-op", emoji: "🌲" },
+  { name: "BioShock Remastered", tier: "excellent", fps: "60+ FPS", genre: "FPS / RPG", emoji: "🔫" },
+  { name: "BioShock 2 Remastered", tier: "excellent", fps: "60+ FPS", genre: "FPS / RPG", emoji: "🔫" },
+  { name: "BioShock Infinite", tier: "excellent", fps: "65-75 FPS", genre: "FPS / Narrativa", emoji: "⚡" },
+  { name: "Fallout: New Vegas", tier: "excellent", fps: "60+ FPS", genre: "RPG / Acción", emoji: "☢️" },
+  { name: "Undertale", tier: "excellent", fps: "Perfecto", genre: "RPG / Indie", emoji: "❤️" },
+  { name: "Beyond: Two Souls", tier: "excellent", fps: "60 FPS", genre: "Aventura Narrativa", emoji: "👁️" },
+  { name: "Assetto Corsa", tier: "excellent", fps: "65-80 FPS", genre: "Simulador", emoji: "🏎️" },
+  { name: "Automobilista", tier: "excellent", fps: "60+ FPS", genre: "Simulador", emoji: "🏁" },
+  { name: "FlatOut", tier: "excellent", fps: "1080p máximo", genre: "Carreras", emoji: "💥" },
+  { name: "FlatOut 2", tier: "excellent", fps: "1080p máximo", genre: "Carreras", emoji: "💥" },
+  { name: "FlatOut: Ultimate Carnage", tier: "excellent", fps: "60+ FPS", genre: "Carreras", emoji: "💥" },
+  { name: "Drift86", tier: "excellent", fps: "60+ FPS", genre: "Carreras / Drift", emoji: "🚗" },
+  { name: "Barro", tier: "excellent", fps: "60+ FPS", genre: "Carreras", emoji: "🏎️" },
+  { name: "Barro F", tier: "excellent", fps: "60+ FPS", genre: "Carreras", emoji: "🏎️" },
+  { name: "Team Fortress 2", tier: "excellent", fps: "90+ FPS", genre: "Shooter / Hero", emoji: "🎩" },
+  { name: "Half-Life 2", tier: "excellent", fps: "90+ FPS", genre: "FPS / Narrativa", emoji: "🔧" },
+  { name: "Call of Duty 4: Modern Warfare", tier: "excellent", fps: "80+ FPS", genre: "Shooter Táctico", emoji: "🪖" },
+  { name: "Age of Empires II: Definitive Edition", tier: "excellent", fps: "60+ FPS", genre: "Estrategia RTS", emoji: "⚔️" },
+  { name: "Battlestar Galactica Deadlock", tier: "excellent", fps: "60+ FPS", genre: "Estrategia Naval", emoji: "🚀" },
+  { name: "Field of Glory II: Medieval", tier: "excellent", fps: "60+ FPS", genre: "Estrategia por turnos", emoji: "🏰" },
+  { name: "The Binding of Isaac: Rebirth", tier: "excellent", fps: "60 FPS", genre: "Roguelike", emoji: "😢" },
+  { name: "Dead Cells", tier: "excellent", fps: "60 FPS", genre: "Roguelike / Metroidvania", emoji: "⚔️" },
+  { name: "Cuphead", tier: "excellent", fps: "60 FPS", genre: "Plataformas / Boss Rush", emoji: "☕" },
+  { name: "Enter the Gungeon", tier: "excellent", fps: "60+ FPS", genre: "Roguelike / Shoot'em up", emoji: "🔫" },
+  { name: "Pizza Tower", tier: "excellent", fps: "60+ FPS", genre: "Plataformas / Indie", emoji: "🍕" },
+  { name: "Geometry Dash", tier: "excellent", fps: "60+ FPS", genre: "Ritmo / Plataformas", emoji: "📐" },
+  { name: "Stardew Valley", tier: "excellent", fps: "60+ FPS", genre: "Simulador / Farming", emoji: "🌾" },
+  { name: "Garry's Mod", tier: "excellent", fps: "60+ FPS", genre: "Sandbox", emoji: "🔨" },
+  { name: "House Flipper", tier: "excellent", fps: "60+ FPS", genre: "Simulador", emoji: "🏠" },
+  { name: "Chill Corner", tier: "excellent", fps: "60+ FPS", genre: "Casual / Relajante", emoji: "☕" },
+  { name: "My dream setup", tier: "excellent", fps: "60+ FPS", genre: "Simulador / Casual", emoji: "💻" },
+  // ─── 30-60 FPS ─────────────────────────────────────
+  { name: "7 Days to Die", tier: "good", fps: "40-60 FPS", genre: "Supervivencia / Terror", emoji: "🧟" },
+  { name: "Phasmophobia", tier: "good", fps: "45-55 FPS", genre: "Terror / Co-op", emoji: "👻" },
+  { name: "The Forest", tier: "good", fps: "45-55 FPS", genre: "Supervivencia / Terror", emoji: "🌲" },
+  { name: "Sons of the Forest", tier: "good", fps: "38-48 FPS", genre: "Supervivencia / Terror", emoji: "🌲" },
+  { name: "Resident Evil Village", tier: "good", fps: "38-45 FPS", genre: "Survival Horror", emoji: "🏰" },
+  { name: "Outlast", tier: "good", fps: "45-50 FPS", genre: "Terror / Sigilo", emoji: "📷" },
+  { name: "Outlast 2", tier: "good", fps: "45-50 FPS", genre: "Terror / Sigilo", emoji: "📷" },
+  { name: "Lethal Company", tier: "good", fps: "50-60 FPS", genre: "Terror / Co-op", emoji: "🏭" },
+  { name: "Five Nights at Freddy's: Security Breach", tier: "good", fps: "30-45 FPS", genre: "Terror", emoji: "🐻" },
+  { name: "The Elder Scrolls V: Skyrim Special Edition", tier: "good", fps: "45-55 FPS", genre: "RPG de Acción", emoji: "🐉" },
+  { name: "Fallout 4", tier: "good", fps: "35-45 FPS", genre: "RPG de Acción", emoji: "☢️" },
+  { name: "Kingdom Come: Deliverance", tier: "good", fps: "35-40 FPS", genre: "RPG Histórico", emoji: "⚔️" },
+  { name: "Assassin's Creed Origins", tier: "good", fps: "35-40 FPS", genre: "Acción / Aventura", emoji: "🏺" },
+  { name: "Forza Horizon 4", tier: "good", fps: "48-55 FPS", genre: "Carreras / Open World", emoji: "🏎️" },
+  { name: "BeamNG.drive", tier: "good", fps: "40-50 FPS", genre: "Simulador de Física", emoji: "💥" },
+  { name: "Euro Truck Simulator 2", tier: "good", fps: "40-60 FPS", genre: "Simulador", emoji: "🚛" },
+  { name: "American Truck Simulator", tier: "good", fps: "50-60 FPS", genre: "Simulador", emoji: "🚛" },
+  { name: "DiRT Rally 2.0", tier: "good", fps: "45-50 FPS", genre: "Rally / Simulador", emoji: "🏁" },
+  { name: "Automobilista 2", tier: "good", fps: "45-50 FPS", genre: "Simulador", emoji: "🏎️" },
+  { name: "MudRunner", tier: "good", fps: "45-55 FPS", genre: "Simulador Off-Road", emoji: "🚜" },
+  { name: "Counter-Strike 2", tier: "good", fps: "55-75 FPS", genre: "Shooter Táctico", emoji: "💣" },
+  { name: "Apex Legends", tier: "good", fps: "45-55 FPS", genre: "Battle Royale / FPS", emoji: "🎯" },
+  { name: "Borderlands 3", tier: "good", fps: "45-55 FPS", genre: "Looter Shooter", emoji: "🔫" },
+  { name: "Call of Duty: Black Ops", tier: "good", fps: "45-60 FPS", genre: "Shooter", emoji: "🪖" },
+  { name: "Arena Breakout: Infinite", tier: "good", fps: "40-50 FPS", genre: "Shooter Táctico", emoji: "🎯" },
+  { name: "Project Zomboid", tier: "good", fps: "30-60 FPS", genre: "Supervivencia / Zombis", emoji: "🧟" },
+  { name: "Cities: Skylines", tier: "good", fps: "~35 FPS", genre: "Simulador Urbano", emoji: "🏙️" },
+  { name: "Company of Heroes 2", tier: "good", fps: "40-50 FPS", genre: "Estrategia RTS", emoji: "🎖️" },
+  { name: "Jurassic World Evolution 2", tier: "good", fps: "40-50 FPS", genre: "Gestión / Simulador", emoji: "🦕" },
+  { name: "Dark Souls III", tier: "good", fps: "40-45 FPS", genre: "Souls-like / Acción", emoji: "💀" },
+  { name: "Dark Souls II: Scholar of the First Sin", tier: "good", fps: "50-55 FPS", genre: "Souls-like / Acción", emoji: "💀" },
+  { name: "Dying Light", tier: "good", fps: "40-50 FPS", genre: "Acción / Zombis / Parkour", emoji: "🧟" },
+  { name: "METAL GEAR RISING: REVENGEANCE", tier: "good", fps: "55-60 FPS", genre: "Acción / Hack and Slash", emoji: "⚔️" },
+  // ─── INJUGABLE ─────────────────────────────────────
+  { name: "Cyberpunk 2077", tier: "bad", fps: "24-28 FPS", genre: "RPG de Acción / Open World", emoji: "🌆" },
+  { name: "Baldur's Gate 3", tier: "bad", fps: "25 FPS", genre: "RPG por Turnos", emoji: "🎲" },
+  { name: "Hogwarts Legacy", tier: "bad", fps: "20-25 FPS", genre: "RPG de Acción", emoji: "🪄" },
+  { name: "Ghost of Tsushima", tier: "bad", fps: "<30 FPS", genre: "Acción / Aventura", emoji: "⛩️" },
+  { name: "No Man's Sky", tier: "bad", fps: "<25 FPS", genre: "Exploración / Sci-Fi", emoji: "🚀" },
+  // ─── SIN DATOS DE RENDIMIENTO (biblioteca completa) ─────────
+  { name: "3on3 FreeStyle: Rebound", tier: "unrated", fps: "--", genre: "Deportes", emoji: "🏀" },
+  { name: "60 Seconds! Reatomized", tier: "unrated", fps: "--", genre: "Supervivencia / Indie", emoji: "☢️" },
+  { name: "8AM", tier: "unrated", fps: "--", genre: "Terror / Indie", emoji: "⏰" },
+  { name: "A Game About Digging A Hole", tier: "unrated", fps: "--", genre: "Casual / Indie", emoji: "⛏️" },
+  { name: "Aeonic", tier: "unrated", fps: "--", genre: "Indie", emoji: "🎮" },
+  { name: "Aimlabs", tier: "unrated", fps: "60+ FPS", genre: "Entrenamiento / Aim", emoji: "🎯" },
+  { name: "Albion Online", tier: "unrated", fps: "--", genre: "MMORPG", emoji: "⚔️" },
+  { name: "Along the Edge", tier: "unrated", fps: "--", genre: "Visual Novel", emoji: "📖" },
+  { name: "Among Us", tier: "unrated", fps: "60+ FPS", genre: "Social / Deducción", emoji: "🚀" },
+  { name: "Andarilho", tier: "unrated", fps: "--", genre: "Indie", emoji: "🎮" },
+  { name: "Animaze", tier: "unrated", fps: "--", genre: "Herramienta / Avatar", emoji: "🎭" },
+  { name: "Anonymous Hacker Simulator", tier: "unrated", fps: "--", genre: "Simulador", emoji: "💻" },
+  { name: "Arabian Gulf", tier: "unrated", fps: "--", genre: "Indie", emoji: "🏜️" },
+  { name: "ARK: Survival Evolved", tier: "unrated", fps: "25-35 FPS", genre: "Supervivencia / Dinos", emoji: "🦕" },
+  { name: "ARK: Survival Of The Fittest", tier: "unrated", fps: "--", genre: "Battle Royale", emoji: "🦕" },
+  { name: "Arma 2: Operation Arrowhead", tier: "unrated", fps: "--", genre: "Simulador Militar", emoji: "🎖️" },
+  { name: "Backrooms: Escape Together", tier: "unrated", fps: "--", genre: "Terror / Co-op", emoji: "👁️" },
+  { name: "BARRIER X", tier: "unrated", fps: "--", genre: "Arcade", emoji: "🎮" },
+  { name: "Berry Bury Berry", tier: "unrated", fps: "--", genre: "Casual", emoji: "🍓" },
+  { name: "BioShock", tier: "excellent", fps: "60+ FPS", genre: "FPS / RPG", emoji: "🔫" },
+  { name: "BioShock 2", tier: "excellent", fps: "60+ FPS", genre: "FPS / RPG", emoji: "🔫" },
+  { name: "Black Desert", tier: "unrated", fps: "30-45 FPS", genre: "MMORPG", emoji: "⚔️" },
+  { name: "Black Mesa", tier: "excellent", fps: "60+ FPS", genre: "FPS / Narrativa", emoji: "🔬" },
+  { name: "Blackwake", tier: "unrated", fps: "--", genre: "Acción Naval", emoji: "⚓" },
+  { name: "Blood and Bacon", tier: "unrated", fps: "--", genre: "Acción / Co-op", emoji: "🐷" },
+  { name: "BLOODSTRIKE", tier: "unrated", fps: "--", genre: "Battle Royale", emoji: "🔫" },
+  { name: "Borderlands 2", tier: "unrated", fps: "55-70 FPS", genre: "Looter Shooter", emoji: "🔫" },
+  { name: "Brawlhalla", tier: "unrated", fps: "60+ FPS", genre: "Lucha / Plataformas", emoji: "👊" },
+  { name: "Bro Falls: Ultimate Showdown", tier: "unrated", fps: "--", genre: "Multijugador / Party", emoji: "😂" },
+  { name: "Buckshot Roulette", tier: "unrated", fps: "60+ FPS", genre: "Horror / Indie", emoji: "🔫" },
+  { name: "Bulb Boy", tier: "unrated", fps: "--", genre: "Aventura / Puzzle", emoji: "💡" },
+  { name: "Call of Duty", tier: "unrated", fps: "--", genre: "Shooter", emoji: "🪖" },
+  { name: "Call of Juarez Gunslinger", tier: "unrated", fps: "60+ FPS", genre: "Shooter / Western", emoji: "🤠" },
+  { name: "Capcom Arcade Stadium", tier: "unrated", fps: "60+ FPS", genre: "Arcade Clásico", emoji: "🕹️" },
+  { name: "Car Mechanic Simulator 2018", tier: "unrated", fps: "50-60 FPS", genre: "Simulador", emoji: "🔧" },
+  { name: "Cats", tier: "unrated", fps: "--", genre: "Casual", emoji: "🐱" },
+  { name: "City Car Driving", tier: "unrated", fps: "--", genre: "Simulador", emoji: "🚗" },
+  { name: "Containment Initiative", tier: "unrated", fps: "--", genre: "VR / Acción", emoji: "🔫" },
+  { name: "Content Warning", tier: "unrated", fps: "--", genre: "Terror / Co-op", emoji: "📹" },
+  { name: "Core Keeper", tier: "unrated", fps: "60+ FPS", genre: "Aventura / Mining", emoji: "⛏️" },
+  { name: "Counter-Strike", tier: "excellent", fps: "90+ FPS", genre: "Shooter Táctico", emoji: "💣" },
+  { name: "Counter-Strike: Condition Zero", tier: "excellent", fps: "90+ FPS", genre: "Shooter Táctico", emoji: "💣" },
+  { name: "Counter-Strike: Source", tier: "excellent", fps: "90+ FPS", genre: "Shooter Táctico", emoji: "💣" },
+  { name: "Crab Game", tier: "unrated", fps: "60+ FPS", genre: "Multijugador / Party", emoji: "🦀" },
+  { name: "Crash Bandicoot N. Sane Trilogy", tier: "unrated", fps: "55-60 FPS", genre: "Plataformas", emoji: "🐾" },
+  { name: "Crazy Machines 3", tier: "unrated", fps: "--", genre: "Puzzle / Simulación", emoji: "⚙️" },
+  { name: "Cult of the Lamb", tier: "unrated", fps: "60 FPS", genre: "Roguelite / Gestión", emoji: "🐑" },
+  { name: "Dakar 18", tier: "unrated", fps: "--", genre: "Rally / Racing", emoji: "🏁" },
+  { name: "Darkest Dungeon", tier: "excellent", fps: "60+ FPS", genre: "Roguelike / RPG", emoji: "🕯️" },
+  { name: "Day of Defeat", tier: "excellent", fps: "90+ FPS", genre: "Shooter Táctico WWII", emoji: "🎖️" },
+  { name: "Day of Defeat: Source", tier: "excellent", fps: "90+ FPS", genre: "Shooter Táctico WWII", emoji: "🎖️" },
+  { name: "Dead Island Definitive Edition", tier: "good", fps: "45-55 FPS", genre: "Acción / Zombis", emoji: "🏖️" },
+  { name: "Dead Island Riptide Definitive Edition", tier: "good", fps: "45-55 FPS", genre: "Acción / Zombis", emoji: "🏖️" },
+  { name: "Deadlock", tier: "unrated", fps: "--", genre: "Hero Shooter / MOBA", emoji: "🔫" },
+  { name: "Death Fungeon", tier: "unrated", fps: "--", genre: "Indie / Roguelike", emoji: "💀" },
+  { name: "DEATH STRANDING", tier: "unrated", fps: "30-40 FPS", genre: "Acción / Aventura", emoji: "👶" },
+  { name: "Deathmatch Classic", tier: "excellent", fps: "90+ FPS", genre: "Shooter Clásico", emoji: "🔫" },
+  { name: "Delta Force", tier: "unrated", fps: "--", genre: "Shooter Táctico", emoji: "🎖️" },
+  { name: "Destiny 2", tier: "unrated", fps: "45-55 FPS", genre: "Looter Shooter / MMO", emoji: "🚀" },
+  { name: "DiRT 4", tier: "good", fps: "45-55 FPS", genre: "Rally / Racing", emoji: "🏁" },
+  { name: "DiRT Rally", tier: "good", fps: "50-60 FPS", genre: "Rally Simulador", emoji: "🏁" },
+  { name: "Disney Speedstorm", tier: "unrated", fps: "--", genre: "Carreras / Arcade", emoji: "🏎️" },
+  { name: "Dog", tier: "unrated", fps: "--", genre: "Casual / Indie", emoji: "🐕" },
+  { name: "DOOM", tier: "excellent", fps: "60+ FPS", genre: "FPS Clásico", emoji: "🔫" },
+  { name: "DOOM Eternal", tier: "unrated", fps: "40-55 FPS", genre: "FPS / Acción", emoji: "😈" },
+  { name: "Dread Not", tier: "unrated", fps: "--", genre: "Indie", emoji: "🎮" },
+  { name: "Drifter Star: Evolution", tier: "unrated", fps: "--", genre: "Indie", emoji: "🌟" },
+  { name: "Driver Booster for Steam", tier: "unrated", fps: "--", genre: "Utilidad", emoji: "💾" },
+  { name: "Duke Nukem 3D: 20th Anniversary", tier: "excellent", fps: "60+ FPS", genre: "FPS Clásico", emoji: "💪" },
+  { name: "eFootball", tier: "unrated", fps: "45-55 FPS", genre: "Fútbol", emoji: "⚽" },
+  { name: "eFootball PES 2020", tier: "unrated", fps: "55-60 FPS", genre: "Fútbol", emoji: "⚽" },
+  { name: "Electrician Simulator - First Shock", tier: "unrated", fps: "--", genre: "Simulador", emoji: "⚡" },
+  { name: "Enderal: Forgotten Stories", tier: "good", fps: "40-55 FPS", genre: "RPG (Mod de Skyrim)", emoji: "🌙" },
+  { name: "ENDLESS Legend", tier: "unrated", fps: "--", genre: "Estrategia por Turnos", emoji: "👑" },
+  { name: "Escape Memoirs: Mini Stories", tier: "unrated", fps: "--", genre: "Escape Room", emoji: "🔑" },
+  { name: "F1 2020", tier: "good", fps: "45-55 FPS", genre: "Simulador F1", emoji: "🏎️" },
+  { name: "F1 2021", tier: "good", fps: "45-55 FPS", genre: "Simulador F1", emoji: "🏎️" },
+  { name: "Fall Guys", tier: "unrated", fps: "50-60 FPS", genre: "Battle Royale / Party", emoji: "🫘" },
+  { name: "Fallout Shelter", tier: "excellent", fps: "60+ FPS", genre: "Gestión / Simulador", emoji: "🏚️" },
+  { name: "Fantasy General II", tier: "unrated", fps: "--", genre: "Estrategia por Turnos", emoji: "🧙" },
+  { name: "Farlight 84", tier: "unrated", fps: "--", genre: "Battle Royale", emoji: "🚀" },
+  { name: "F.E.A.R. 2: Project Origin", tier: "unrated", fps: "60+ FPS", genre: "FPS / Terror", emoji: "👁️" },
+  { name: "Feeding Frenzy 2: Shipwreck Showdown", tier: "excellent", fps: "60+ FPS", genre: "Arcade Casual", emoji: "🐟" },
+  { name: "Find Out", tier: "unrated", fps: "--", genre: "Casual / Puzzle", emoji: "🔍" },
+  { name: "Finnish Roller", tier: "unrated", fps: "--", genre: "Indie / Carreras", emoji: "🛼" },
+  { name: "Force Reboot", tier: "unrated", fps: "--", genre: "Indie", emoji: "🎮" },
+  { name: "FPV.SkyDive", tier: "unrated", fps: "--", genre: "Simulador FPV", emoji: "🚁" },
+  { name: "Friendly Steps Demo", tier: "unrated", fps: "--", genre: "Indie", emoji: "🎮" },
+  { name: "Friends vs Friends", tier: "unrated", fps: "--", genre: "Card Shooter", emoji: "🃏" },
+  { name: "Gang Beasts", tier: "unrated", fps: "50-60 FPS", genre: "Lucha / Party", emoji: "👊" },
+  { name: "Garfield Kart - Furious Racing", tier: "unrated", fps: "60+ FPS", genre: "Carreras / Kart", emoji: "😺" },
+  { name: "Gas Guzzlers Extreme", tier: "unrated", fps: "--", genre: "Carreras / Combate", emoji: "🔥" },
+  { name: "Gear Up", tier: "unrated", fps: "--", genre: "Acción / Tanques", emoji: "⚙️" },
+  { name: "Generation Zero", tier: "unrated", fps: "35-45 FPS", genre: "Acción / Open World", emoji: "🤖" },
+  { name: "GeoGuessr Steam Edition", tier: "unrated", fps: "60+ FPS", genre: "Casual / Geografía", emoji: "🌍" },
+  { name: "Getting Over It with Bennett Foddy", tier: "excellent", fps: "60+ FPS", genre: "Plataformas / Indie", emoji: "⛺" },
+  { name: "Ghost of Tsushima: DIRECTOR'S CUT", tier: "bad", fps: "<30 FPS", genre: "Acción / Aventura", emoji: "⛩️" },
+  { name: "Gold Mining Simulator", tier: "unrated", fps: "--", genre: "Simulador", emoji: "⛏️" },
+  { name: "Golf It!", tier: "unrated", fps: "60+ FPS", genre: "Golf / Multijugador", emoji: "⛳" },
+  { name: "Governor of Poker 2: Premium Edition", tier: "unrated", fps: "60+ FPS", genre: "Cartas / Casual", emoji: "🃏" },
+  { name: "Grand Theft Auto V Enhanced", tier: "good", fps: "40-55 FPS", genre: "Acción / Open World", emoji: "🚗" },
+  { name: "Grand Theft Auto V Legacy", tier: "good", fps: "45-60 FPS", genre: "Acción / Open World", emoji: "🚗" },
+  { name: "Green Hell", tier: "unrated", fps: "35-45 FPS", genre: "Supervivencia", emoji: "🌿" },
+  { name: "Grimm", tier: "unrated", fps: "--", genre: "Indie", emoji: "🎮" },
+  { name: "Hades", tier: "excellent", fps: "60+ FPS", genre: "Roguelite / Acción", emoji: "⚔️" },
+  { name: "Half-Life", tier: "excellent", fps: "90+ FPS", genre: "FPS Clásico", emoji: "🔧" },
+  { name: "Half-Life 2: Deathmatch", tier: "excellent", fps: "90+ FPS", genre: "Shooter Multijugador", emoji: "🔧" },
+  { name: "Half-Life: Blue Shift", tier: "excellent", fps: "90+ FPS", genre: "FPS Clásico", emoji: "🔧" },
+  { name: "Half-Life Deathmatch: Source", tier: "excellent", fps: "90+ FPS", genre: "Shooter Multijugador", emoji: "🔧" },
+  { name: "Half-Life: Opposing Force", tier: "excellent", fps: "90+ FPS", genre: "FPS Clásico", emoji: "🔧" },
+  { name: "Half-Life: Source", tier: "excellent", fps: "90+ FPS", genre: "FPS Clásico", emoji: "🔧" },
+  { name: "Halo Infinite", tier: "unrated", fps: "35-50 FPS", genre: "FPS / Sci-Fi", emoji: "⚔️" },
+  { name: "Hello Neighbor Alpha 1", tier: "unrated", fps: "--", genre: "Terror / Sigilo", emoji: "👀" },
+  { name: "Hide and Shriek", tier: "unrated", fps: "--", genre: "Terror / Multijugador", emoji: "👻" },
+  { name: "Hollow Knight", tier: "excellent", fps: "60+ FPS", genre: "Metroidvania / Indie", emoji: "🦋" },
+  { name: "HOT WHEELS UNLEASHED", tier: "unrated", fps: "50-60 FPS", genre: "Carreras / Kart", emoji: "🔥" },
+  { name: "Hotel Owner Simulator", tier: "unrated", fps: "--", genre: "Simulador / Gestión", emoji: "🏨" },
+  { name: "Hotline Miami", tier: "excellent", fps: "60+ FPS", genre: "Acción / Top-Down", emoji: "🦩" },
+  { name: "Hotline Miami 2: Wrong Number", tier: "excellent", fps: "60+ FPS", genre: "Acción / Top-Down", emoji: "🦩" },
+  { name: "In Silence", tier: "unrated", fps: "--", genre: "Terror / Multijugador", emoji: "👁️" },
+  { name: "Indigo Park", tier: "unrated", fps: "--", genre: "Terror / Indie", emoji: "🎠" },
+  { name: "Infection Free Zone", tier: "unrated", fps: "--", genre: "Estrategia / Zombis", emoji: "☣️" },
+  { name: "Initial Drift Online", tier: "unrated", fps: "--", genre: "Drift / Carreras", emoji: "🚗" },
+  { name: "Insaniquarium! Deluxe", tier: "excellent", fps: "60+ FPS", genre: "Casual / Arcade", emoji: "🐠" },
+  { name: "Internet Cafe Simulator 2", tier: "unrated", fps: "--", genre: "Simulador / Gestión", emoji: "🖥️" },
+  { name: "Intravenous", tier: "unrated", fps: "--", genre: "Sigilo / Top-Down", emoji: "💉" },
+  { name: "It Takes Two Friend's Pass", tier: "unrated", fps: "55-60 FPS", genre: "Plataformas / Co-op", emoji: "❤️" },
+  { name: "Just Ignore Them", tier: "unrated", fps: "--", genre: "Terror / Indie", emoji: "👻" },
+  { name: "Just Shapes & Beats", tier: "excellent", fps: "60+ FPS", genre: "Ritmo / Bullet Hell", emoji: "🎵" },
+  { name: "Kao the Kangaroo: Round 2", tier: "excellent", fps: "60+ FPS", genre: "Plataformas Clásico", emoji: "🦘" },
+  { name: "Kiki", tier: "unrated", fps: "--", genre: "Indie", emoji: "🎮" },
+  { name: "Kitten Squad", tier: "unrated", fps: "--", genre: "Acción / Indie", emoji: "🐱" },
+  { name: "LAN Party", tier: "unrated", fps: "--", genre: "Casual / Indie", emoji: "🖥️" },
+  { name: "Lara Croft and the Guardian of Light", tier: "unrated", fps: "60+ FPS", genre: "Acción / Aventura", emoji: "🏺" },
+  { name: "Liar's Bar", tier: "unrated", fps: "--", genre: "Indie / Party", emoji: "🃏" },
+  { name: "Little Nightmares", tier: "unrated", fps: "50-60 FPS", genre: "Terror / Plataformas", emoji: "🕯️" },
+  { name: "Little Nightmares Enhanced Edition", tier: "unrated", fps: "50-60 FPS", genre: "Terror / Plataformas", emoji: "🕯️" },
+  { name: "Lossless Scaling", tier: "unrated", fps: "--", genre: "Herramienta / Upscaling", emoji: "🔧" },
+  { name: "Lost in Anomaly", tier: "unrated", fps: "--", genre: "Indie", emoji: "🎮" },
+  { name: "Machinika Museum", tier: "unrated", fps: "--", genre: "Puzzle / Aventura", emoji: "🔧" },
+  { name: "Mage Arena", tier: "unrated", fps: "--", genre: "Acción / RPG", emoji: "🧙" },
+  { name: "Magellania", tier: "unrated", fps: "--", genre: "Indie", emoji: "🗺️" },
+  { name: "Magicite", tier: "unrated", fps: "--", genre: "Roguelike / Plataformas", emoji: "✨" },
+  { name: "McOsu", tier: "unrated", fps: "--", genre: "Ritmo (Clone de Osu)", emoji: "🎵" },
+  { name: "Metro 2033 Redux", tier: "good", fps: "40-55 FPS", genre: "FPS / Post-Apocalíptico", emoji: "☢️" },
+  { name: "Metro Exodus", tier: "unrated", fps: "30-40 FPS", genre: "FPS / Aventura", emoji: "☢️" },
+  { name: "Metro Exodus Enhanced Edition", tier: "unrated", fps: "30-40 FPS", genre: "FPS / Aventura", emoji: "☢️" },
+  { name: "Metro: Last Light Complete Edition", tier: "good", fps: "45-55 FPS", genre: "FPS / Post-Apocalíptico", emoji: "☢️" },
+  { name: "Metro: Last Light Redux", tier: "good", fps: "45-55 FPS", genre: "FPS / Post-Apocalíptico", emoji: "☢️" },
+  { name: "Mirror's Edge", tier: "excellent", fps: "60+ FPS", genre: "Acción / Parkour", emoji: "🏃" },
+  { name: "Mirror's Edge Catalyst", tier: "unrated", fps: "40-50 FPS", genre: "Acción / Parkour", emoji: "🏃" },
+  { name: "Monster Energy Supercross", tier: "unrated", fps: "--", genre: "Motocross / Racing", emoji: "🏍️" },
+  { name: "Mortal Kombat X", tier: "unrated", fps: "55-60 FPS", genre: "Lucha", emoji: "👊" },
+  { name: "Mount & Blade: Warband", tier: "excellent", fps: "60+ FPS", genre: "RPG / Estrategia Medieval", emoji: "⚔️" },
+  { name: "Move or Die", tier: "unrated", fps: "60+ FPS", genre: "Party / Multijugador", emoji: "💨" },
+  { name: "Muse Dash", tier: "unrated", fps: "60+ FPS", genre: "Ritmo / Musical", emoji: "🎵" },
+  { name: "My Coworker Is An Idiot", tier: "unrated", fps: "--", genre: "Indie / Casual", emoji: "😤" },
+  { name: "My Summer Car", tier: "unrated", fps: "--", genre: "Simulador / Sandbox", emoji: "🚗" },
+  { name: "Narvas", tier: "unrated", fps: "--", genre: "Indie", emoji: "🎮" },
+  { name: "NASCAR Heat 5", tier: "unrated", fps: "--", genre: "Carreras NASCAR", emoji: "🏎️" },
+  { name: "NBA 2K23", tier: "unrated", fps: "40-50 FPS", genre: "Baloncesto", emoji: "🏀" },
+  { name: "Necesse", tier: "unrated", fps: "60+ FPS", genre: "Sandbox / Aventura", emoji: "⚔️" },
+  { name: "Need for Speed: SHIFT", tier: "unrated", fps: "55-60 FPS", genre: "Carreras", emoji: "🏎️" },
+  { name: "Need for Speed: Undercover", tier: "unrated", fps: "55-60 FPS", genre: "Carreras / Open World", emoji: "🚔" },
+  { name: "Nocturnal", tier: "unrated", fps: "--", genre: "Plataformas / Indie", emoji: "🌙" },
+  { name: "OBS Studio", tier: "unrated", fps: "--", genre: "Herramienta / Streaming", emoji: "📹" },
+  { name: "Omega Strikers", tier: "unrated", fps: "--", genre: "Deportes / Acción", emoji: "⚡" },
+  { name: "One-armed robber", tier: "unrated", fps: "--", genre: "Indie / Acción", emoji: "🦾" },
+  { name: "Operation: Outbreak", tier: "unrated", fps: "--", genre: "Terror / Co-op", emoji: "☣️" },
+  { name: "Overwatch", tier: "unrated", fps: "45-60 FPS", genre: "Hero Shooter", emoji: "🎯" },
+  { name: "Paladins", tier: "unrated", fps: "55-60 FPS", genre: "Hero Shooter", emoji: "🛡️" },
+  { name: "Palia", tier: "unrated", fps: "35-45 FPS", genre: "MMO / Casual", emoji: "🌸" },
+  { name: "Paragnosia", tier: "unrated", fps: "--", genre: "Terror / Indie", emoji: "👻" },
+  { name: "Party Club", tier: "unrated", fps: "--", genre: "Party / Multijugador", emoji: "🎉" },
+  { name: "Passpartout 2: The Lost Artist", tier: "unrated", fps: "--", genre: "Simulador / Creativo", emoji: "🎨" },
+  { name: "PAYDAY 2", tier: "excellent", fps: "60+ FPS", genre: "FPS / Co-op Atracos", emoji: "🤑" },
+  { name: "PEAK", tier: "unrated", fps: "--", genre: "Indie", emoji: "⛰️" },
+  { name: "Peggle Deluxe", tier: "excellent", fps: "60+ FPS", genre: "Casual / Puzzle", emoji: "🎯" },
+  { name: "PICO PARK: Classic Edition", tier: "unrated", fps: "--", genre: "Co-op / Puzzle", emoji: "🧩" },
+  { name: "Plague Inc: Evolved", tier: "excellent", fps: "60+ FPS", genre: "Estrategia", emoji: "🦠" },
+  { name: "Plants vs. Zombies: Game of the Year", tier: "excellent", fps: "60+ FPS", genre: "Tower Defense / Casual", emoji: "🌻" },
+  { name: "Poly Bridge", tier: "unrated", fps: "60+ FPS", genre: "Puzzle / Ingeniería", emoji: "🌉" },
+  { name: "Poppy Playtime", tier: "unrated", fps: "45-55 FPS", genre: "Terror / Puzzle", emoji: "🧸" },
+  { name: "Portal", tier: "excellent", fps: "90+ FPS", genre: "Puzzle / FPS", emoji: "🌀" },
+  { name: "Portal 2", tier: "excellent", fps: "90+ FPS", genre: "Puzzle / FPS / Co-op", emoji: "🌀" },
+  { name: "Prison Life", tier: "unrated", fps: "--", genre: "Casual / Indie", emoji: "🔒" },
+  { name: "Project CARS", tier: "unrated", fps: "40-50 FPS", genre: "Simulador", emoji: "🏎️" },
+  { name: "Project Playtime", tier: "unrated", fps: "--", genre: "Terror / Co-op", emoji: "🧸" },
+  { name: "RaceRoom Racing Experience", tier: "unrated", fps: "55-60 FPS", genre: "Simulador de Carreras", emoji: "🏎️" },
+  { name: "Raft", tier: "unrated", fps: "40-55 FPS", genre: "Supervivencia", emoji: "🚣" },
+  { name: "Ranch Simulator", tier: "unrated", fps: "--", genre: "Simulador / Granja", emoji: "🐄" },
+  { name: "Resident Evil 2", tier: "good", fps: "45-55 FPS", genre: "Survival Horror", emoji: "🧟" },
+  { name: "Resident Evil 3", tier: "good", fps: "45-55 FPS", genre: "Survival Horror", emoji: "🧟" },
+  { name: "Resident Evil 4", tier: "good", fps: "50-60 FPS", genre: "Survival Horror / Acción", emoji: "🧟" },
+  { name: "RESIDENT EVIL RESISTANCE", tier: "unrated", fps: "--", genre: "Terror / Co-op Asimétrico", emoji: "🧟" },
+  { name: "Resident Evil Revelations 2", tier: "unrated", fps: "55-60 FPS", genre: "Survival Horror / Co-op", emoji: "🧟" },
+  { name: "Resident Evil Re:Verse", tier: "unrated", fps: "--", genre: "Terror / Multijugador", emoji: "🧟" },
+  { name: "RetroArch", tier: "unrated", fps: "60+ FPS", genre: "Emulador Multicore", emoji: "🕹️" },
+  { name: "Retrowave", tier: "unrated", fps: "--", genre: "Música / Visual", emoji: "🌅" },
+  { name: "Ricochet", tier: "excellent", fps: "60+ FPS", genre: "Arcade Clásico Valve", emoji: "🥏" },
+  { name: "Rise of Nations: Extended Edition", tier: "excellent", fps: "60+ FPS", genre: "Estrategia RTS", emoji: "🏰" },
+  { name: "Rise of the Tomb Raider", tier: "good", fps: "40-50 FPS", genre: "Acción / Aventura", emoji: "🏹" },
+  { name: "Risk of Rain 2", tier: "unrated", fps: "45-60 FPS", genre: "Roguelite / Shooter", emoji: "☔" },
+  { name: "Robocraft", tier: "unrated", fps: "--", genre: "Acción / Construcción", emoji: "🤖" },
+  { name: "Rocket League", tier: "excellent", fps: "60+ FPS", genre: "Deportes / Coches", emoji: "🚀" },
+  { name: "Rush Rally 3", tier: "unrated", fps: "60+ FPS", genre: "Rally / Racing", emoji: "🏎️" },
+  { name: "RUSSIAPHOBIA", tier: "unrated", fps: "--", genre: "Indie", emoji: "🎮" },
+  { name: "Rusty's Retirement", tier: "unrated", fps: "--", genre: "Idle / Casual", emoji: "🌾" },
+  { name: "Sekiro: Shadows Die Twice", tier: "unrated", fps: "45-55 FPS", genre: "Souls-like / Acción", emoji: "🗡️" },
+  { name: "Serious Sam Classic: The First Encounter", tier: "excellent", fps: "60+ FPS", genre: "FPS Clásico", emoji: "💪" },
+  { name: "Serious Sam Classic: The Second Encounter", tier: "excellent", fps: "60+ FPS", genre: "FPS Clásico", emoji: "💪" },
+  { name: "Serious Sam Classics: Revolution", tier: "excellent", fps: "60+ FPS", genre: "FPS Clásico", emoji: "💪" },
+  { name: "Shredders", tier: "unrated", fps: "--", genre: "Snowboard", emoji: "🏂" },
+  { name: "Sir Whoopass: Immortal Death", tier: "unrated", fps: "--", genre: "Indie / Acción", emoji: "👊" },
+  { name: "skate.", tier: "unrated", fps: "--", genre: "Skateboarding", emoji: "🛹" },
+  { name: "Skullgirls 2nd Encore", tier: "excellent", fps: "60+ FPS", genre: "Lucha / Indie", emoji: "💀" },
+  { name: "Skyrim Script Extender (SKSE)", tier: "unrated", fps: "--", genre: "Herramienta/Mod", emoji: "🔧" },
+  { name: "Slappyball", tier: "unrated", fps: "--", genre: "Deportes / Indie", emoji: "⚽" },
+  { name: "SLUDGE LIFE", tier: "unrated", fps: "--", genre: "Indie / Exploración", emoji: "🐸" },
+  { name: "Sniper Elite 4", tier: "unrated", fps: "40-50 FPS", genre: "Sigilo / Shooter", emoji: "🎯" },
+  { name: "SpaceEngine", tier: "unrated", fps: "--", genre: "Simulador Espacial", emoji: "🌌" },
+  { name: "Spyro Reignited Trilogy", tier: "unrated", fps: "50-60 FPS", genre: "Plataformas", emoji: "🐉" },
+  { name: "Star Trek Online", tier: "unrated", fps: "--", genre: "MMO / Sci-Fi", emoji: "🚀" },
+  { name: "Starbound", tier: "excellent", fps: "60+ FPS", genre: "Aventura / Sandbox 2D", emoji: "⭐" },
+  { name: "Stumble Guys", tier: "unrated", fps: "55-60 FPS", genre: "Battle Royale / Party", emoji: "😂" },
+  { name: "Subnautica", tier: "unrated", fps: "40-55 FPS", genre: "Supervivencia / Exploración", emoji: "🌊" },
+  { name: "Subnautica: Below Zero", tier: "unrated", fps: "40-55 FPS", genre: "Supervivencia / Exploración", emoji: "🧊" },
+  { name: "SUPER PEOPLE", tier: "unrated", fps: "--", genre: "Battle Royale", emoji: "🦸" },
+  { name: "Superliminal", tier: "unrated", fps: "60+ FPS", genre: "Puzzle / Perspectiva", emoji: "👁️" },
+  { name: "Supermarket Together", tier: "unrated", fps: "--", genre: "Co-op / Gestión", emoji: "🛒" },
+  { name: "SurrounDead Poly Construction", tier: "unrated", fps: "--", genre: "Supervivencia / Zombis", emoji: "🧟" },
+  { name: "Tabletop Simulator", tier: "unrated", fps: "55-60 FPS", genre: "Juegos de Mesa / Online", emoji: "🎲" },
+  { name: "Taxi Life: A City Driving Simulator", tier: "unrated", fps: "35-45 FPS", genre: "Simulador", emoji: "🚕" },
+  { name: "Team Fortress Classic", tier: "excellent", fps: "90+ FPS", genre: "Shooter Clásico", emoji: "🎩" },
+  { name: "Tell Me Why", tier: "unrated", fps: "55-60 FPS", genre: "Aventura Narrativa", emoji: "📖" },
+  { name: "Terraria", tier: "excellent", fps: "60+ FPS", genre: "Sandbox / Aventura 2D", emoji: "⛏️" },
+  { name: "The Complex: Found Footage", tier: "unrated", fps: "--", genre: "Terror / FMV", emoji: "📹" },
+  { name: "The Descendant", tier: "unrated", fps: "--", genre: "Aventura Narrativa", emoji: "🏚️" },
+  { name: "The Elder Scrolls IV: Oblivion", tier: "excellent", fps: "60+ FPS", genre: "RPG de Acción", emoji: "🏰" },
+  { name: "The Elder Scrolls Online", tier: "unrated", fps: "35-50 FPS", genre: "MMORPG", emoji: "⚔️" },
+  { name: "The Escapists", tier: "unrated", fps: "60+ FPS", genre: "Estrategia / Gestión", emoji: "🔒" },
+  { name: "The Escapists 2", tier: "unrated", fps: "60+ FPS", genre: "Estrategia / Gestión", emoji: "🔒" },
+  { name: "THE FINALS", tier: "unrated", fps: "40-55 FPS", genre: "Shooter por Equipos", emoji: "🎬" },
+  { name: "The Infected", tier: "unrated", fps: "--", genre: "Supervivencia / Terror", emoji: "☣️" },
+  { name: "The Lab", tier: "unrated", fps: "--", genre: "VR / Experimental Valve", emoji: "🔬" },
+  { name: "The Last of Us Parte I", tier: "bad", fps: "20-30 FPS", genre: "Acción / Supervivencia", emoji: "🍄" },
+  { name: "The Long Dark", tier: "unrated", fps: "45-55 FPS", genre: "Supervivencia / Narrativa", emoji: "❄️" },
+  { name: "The Mortuary Assistant", tier: "unrated", fps: "--", genre: "Terror / Simulador", emoji: "⚰️" },
+  { name: "The Outer Worlds", tier: "unrated", fps: "40-50 FPS", genre: "RPG FPS", emoji: "🚀" },
+  { name: "The Planet Crafter", tier: "unrated", fps: "45-55 FPS", genre: "Supervivencia / Terraforming", emoji: "🌍" },
+  { name: "The Sims 4", tier: "unrated", fps: "45-55 FPS", genre: "Simulador de Vida", emoji: "🏠" },
+  { name: "The Walking Dead", tier: "unrated", fps: "60+ FPS", genre: "Aventura Narrativa", emoji: "🧟" },
+  { name: "The Witcher 3: Wild Hunt", tier: "good", fps: "35-50 FPS", genre: "RPG de Acción / Open World", emoji: "⚔️" },
+  { name: "theHunter Classic", tier: "unrated", fps: "--", genre: "Caza / Simulador", emoji: "🦌" },
+  { name: "Thief Simulator", tier: "unrated", fps: "--", genre: "Simulador / Sigilo", emoji: "🥷" },
+  { name: "Titan Souls", tier: "unrated", fps: "60+ FPS", genre: "Acción / Boss Rush", emoji: "👾" },
+  { name: "tModLoader", tier: "unrated", fps: "--", genre: "Herramienta / Mod", emoji: "🔧" },
+  { name: "Tom Clancy's Rainbow Six Siege", tier: "good", fps: "45-60 FPS", genre: "Shooter Táctico", emoji: "🛡️" },
+  { name: "Torque Drift", tier: "unrated", fps: "--", genre: "Drift / Carreras", emoji: "🚗" },
+  { name: "TrackMania Nations Forever", tier: "excellent", fps: "60+ FPS", genre: "Carreras / Arcade", emoji: "🏎️" },
+  { name: "Tribe XR | DJ Academy", tier: "unrated", fps: "--", genre: "Música / VR", emoji: "🎧" },
+  { name: "UMIGARI | ウミガリ", tier: "unrated", fps: "--", genre: "Indie / Puzzle", emoji: "🎮" },
+  { name: "Uncanny Tales: Cold Road", tier: "unrated", fps: "--", genre: "Aventura / Indie", emoji: "❄️" },
+  { name: "UNDEFEATED", tier: "unrated", fps: "--", genre: "Lucha / Indie", emoji: "👊" },
+  { name: "Urban Trial Freestyle", tier: "unrated", fps: "--", genre: "Motocross / Arcade", emoji: "🏍️" },
+  { name: "Urban Trial Playground", tier: "unrated", fps: "--", genre: "Motocross / Arcade", emoji: "🏍️" },
+  { name: "Valheim", tier: "good", fps: "40-55 FPS", genre: "Supervivencia / Viking", emoji: "⚔️" },
+  { name: "Vampire Survivors", tier: "excellent", fps: "60+ FPS", genre: "Roguelite / Auto-shooter", emoji: "🧛" },
+  { name: "Violent Horror Stories: anthology", tier: "unrated", fps: "--", genre: "Terror / Indie", emoji: "🔪" },
+  { name: "Viscera Cleanup Detail", tier: "unrated", fps: "55-60 FPS", genre: "Simulador / Co-op", emoji: "🧹" },
+  { name: "VRChat", tier: "unrated", fps: "--", genre: "Social / VR", emoji: "👥" },
+  { name: "Wagotabi", tier: "unrated", fps: "--", genre: "Indie", emoji: "🎮" },
+  { name: "Wallpaper Engine", tier: "unrated", fps: "--", genre: "Herramienta / Wallpaper", emoji: "🖼️" },
+  { name: "Warhammer 40,000: Gladius - Relics of War", tier: "unrated", fps: "--", genre: "Estrategia 4X", emoji: "🔫" },
+  { name: "Warhammer: Vermintide 2", tier: "good", fps: "40-50 FPS", genre: "Acción / Co-op", emoji: "🐀" },
+  { name: "We Were Here", tier: "unrated", fps: "60+ FPS", genre: "Aventura / Co-op / Puzzle", emoji: "🗝️" },
+  { name: "We Were Here Together", tier: "unrated", fps: "60+ FPS", genre: "Aventura / Co-op / Puzzle", emoji: "🗝️" },
+  { name: "WET", tier: "unrated", fps: "--", genre: "Acción / Acrobacias", emoji: "💧" },
+  { name: "WGT Golf", tier: "unrated", fps: "--", genre: "Golf / Casual", emoji: "⛳" },
+  { name: "WheelMates Demo", tier: "unrated", fps: "--", genre: "Demo / Carreras", emoji: "🚗" },
+  { name: "Will Glow the Wisp", tier: "unrated", fps: "--", genre: "Indie / Acción", emoji: "✨" },
+  { name: "World of Goo", tier: "excellent", fps: "60+ FPS", genre: "Puzzle / Indie Clásico", emoji: "🟢" },
+  { name: "WorldBox - God Simulator", tier: "unrated", fps: "60+ FPS", genre: "Sandbox / Simulador Dios", emoji: "🌍" },
+  { name: "WRC 4 FIA World Rally Championship", tier: "unrated", fps: "--", genre: "Rally / Racing", emoji: "🏁" },
+  { name: "WRC 9 FIA World Rally Championship", tier: "unrated", fps: "45-55 FPS", genre: "Rally / Racing", emoji: "🏁" },
+  { name: "Wreckfest", tier: "good", fps: "45-55 FPS", genre: "Carreras / Destrucción", emoji: "💥" },
+  { name: "Wreckfest 2", tier: "unrated", fps: "--", genre: "Carreras / Destrucción", emoji: "💥" },
+  { name: "X8", tier: "unrated", fps: "--", genre: "Indie", emoji: "🎮" },
+  { name: "XCOM 2", tier: "good", fps: "40-50 FPS", genre: "Estrategia por Turnos", emoji: "👽" },
+  { name: "xVASynth", tier: "unrated", fps: "--", genre: "Herramienta / IA de Voz", emoji: "🎙️" },
+  { name: "Zuma's Revenge", tier: "excellent", fps: "60+ FPS", genre: "Casual / Arcade", emoji: "🐸" },
+  { name: "Resident Evil 4 (2005)", tier: "excellent", fps: "60+ FPS", genre: "Survival Horror / Acción", emoji: "🧟" },
+  { name: "R.E.P.O.", tier: "unrated", fps: "--", genre: "Terror / Co-op", emoji: "🤖" },
+  { name: "Friday the 13th: The Game", tier: "unrated", fps: "40-50 FPS", genre: "Terror / Asimétrico", emoji: "🔪" },
+  { name: "Dollmare", tier: "excellent", fps: "60+ FPS", genre: "Terror / Indie", emoji: "🪆" },
+  { name: "ASTRONEER", tier: "unrated", fps: "35-45 FPS", genre: "Exploración / Sandbox", emoji: "🚀" },
+  { name: "Borderlands 2", tier: "good", fps: "55-70 FPS", genre: "Looter Shooter / FPS", emoji: "🔫" },
+];
+
+// ── Comunity scores (simulados por conocimiento general) ──────────────
+const SCORES = {
+  "Left 4 Dead": 9.2, "Left 4 Dead 2": 9.5, "Pacify": 7.1,
+  "Dollmare": 7.8, "Ultimate Custom Night": 8.9, "Don't Starve Together": 8.8,
+  "BioShock Remastered": 9.0, "BioShock 2 Remastered": 8.7, "BioShock Infinite": 8.9,
+  "Fallout: New Vegas": 9.3, "Undertale": 9.6, "Beyond: Two Souls": 7.8,
+  "Assetto Corsa": 8.8, "Automobilista": 7.9, "FlatOut": 8.0, "FlatOut 2": 8.4,
+  "FlatOut: Ultimate Carnage": 8.1, "Drift86": 6.8, "Barro": 6.5, "Barro F": 6.3,
+  "Team Fortress 2": 9.0, "Half-Life 2": 9.7, "Call of Duty 4: Modern Warfare": 9.1,
+  "Age of Empires II: Definitive Edition": 9.4, "Battlestar Galactica Deadlock": 7.6,
+  "Field of Glory II: Medieval": 7.4, "The Binding of Isaac: Rebirth": 9.2,
+  "Dead Cells": 9.1, "Cuphead": 8.8, "Enter the Gungeon": 9.0, "Pizza Tower": 9.3,
+  "Geometry Dash": 9.1, "Stardew Valley": 9.6, "Garry's Mod": 9.3, "House Flipper": 8.0,
+  "7 Days to Die": 7.8, "Phasmophobia": 8.9, "The Forest": 8.5, "Sons of the Forest": 8.0,
+  "Resident Evil Village": 8.7, "Outlast": 8.8, "Outlast 2": 8.3, "Lethal Company": 9.2,
+  "Five Nights at Freddy's: Security Breach": 6.5,
+  "The Elder Scrolls V: Skyrim Special Edition": 9.5, "Fallout 4": 8.5,
+  "Kingdom Come: Deliverance": 8.7, "Assassin's Creed Origins": 8.4,
+  "Forza Horizon 4": 9.3, "BeamNG.drive": 9.4, "Euro Truck Simulator 2": 8.9,
+  "American Truck Simulator": 8.7, "DiRT Rally 2.0": 8.8, "Automobilista 2": 8.3,
+  "MudRunner": 7.8, "Counter-Strike 2": 8.2, "Apex Legends": 8.5, "Borderlands 3": 8.0,
+  "Call of Duty: Black Ops": 8.3, "Project Zomboid": 9.0, "Cities: Skylines": 9.0,
+  "Company of Heroes 2": 8.5, "Jurassic World Evolution 2": 8.2,
+  "Dark Souls III": 9.3, "Dark Souls II: Scholar of the First Sin": 8.7,
+  "Dying Light": 9.0, "METAL GEAR RISING: REVENGEANCE": 9.2,
+  "Cyberpunk 2077": 8.9, "Baldur's Gate 3": 9.7, "Hogwarts Legacy": 8.5,
+  "Ghost of Tsushima": 9.4, "No Man's Sky": 8.4,
+  "Portal": 9.8, "Portal 2": 9.9, "Half-Life": 9.6, "Terraria": 9.7,
+  "Hollow Knight": 9.4, "Hades": 9.5, "The Witcher 3: Wild Hunt": 9.6,
+  "DOOM": 9.4, "Hotline Miami": 9.0, "Hotline Miami 2: Wrong Number": 8.7,
+  "Rocket League": 9.1, "PAYDAY 2": 8.8, "Vampire Survivors": 9.2,
+  "Resident Evil 2": 9.2, "Resident Evil 3": 8.4, "Resident Evil 4": 9.5,
+  "Subnautica": 9.3, "Risk of Rain 2": 9.0, "Mount & Blade: Warband": 9.0,
+  "Valheim": 9.0, "Among Us": 8.5, "Fall Guys": 8.0, "Gang Beasts": 8.2,
+  "Sekiro: Shadows Die Twice": 9.2, "Grand Theft Auto V Legacy": 9.3,
+  "The Last of Us Parte I": 9.5, "DEATH STRANDING": 8.4,
+  "Dead Island Definitive Edition": 7.8, "Darkest Dungeon": 8.8,
+  "Mirror's Edge": 8.5, "Rise of Nations: Extended Edition": 8.7,
+  "XCOM 2": 9.0, "Warhammer: Vermintide 2": 8.5, "Wreckfest": 8.8,
+  "Metro 2033 Redux": 8.9, "Metro: Last Light Redux": 8.9, "Metro Exodus": 8.7,
+  "Skullgirls 2nd Encore": 8.6, "Enderal: Forgotten Stories": 9.1,
+  "Tom Clancy's Rainbow Six Siege": 8.8, "Borderlands 2": 9.1,
+  "Cult of the Lamb": 8.5, "Little Nightmares": 8.7, "Poppy Playtime": 7.9,
+  "Crash Bandicoot N. Sane Trilogy": 8.8, "Spyro Reignited Trilogy": 8.9,
+  "Resident Evil 4 (2005)": 9.3, "Friday the 13th: The Game": 7.2,
+  "Black Mesa": 9.1, "Plague Inc: Evolved": 8.7, "Destiny 2": 8.0,
+  "Plants vs. Zombies: Game of the Year": 9.1, "Starbound": 8.2,
+  "World of Goo": 8.9, "Rise of the Tomb Raider": 8.7,
+};
+
+// ══════════════════════════════════════════════════════
+// APP STATE
+// ══════════════════════════════════════════════════════
+let currentFilter = 'all';
+let currentSearch = '';
+let loadedGames = new Map();
+
+// ── RENDER FUNCTIONS ──────────────────────────────────
+function getScore(name) { return SCORES[name] || null; }
+
+function scoreColor(s) {
+  if (!s) return 'var(--muted)';
+  if (s >= 8.5) return 'var(--green)';
+  if (s >= 7.0) return 'var(--yellow)';
+  return 'var(--red)';
+}
+
+function verdictText(s) {
+  if (!s) return '';
+  if (s >= 9.0) return '🏆 Obra maestra';
+  if (s >= 8.0) return '👍 Muy recomendado';
+  if (s >= 7.0) return '✅ Buena opción';
+  if (s >= 6.0) return '😐 Regular';
+  return '⚠️ Divisivo';
+}
+
+function tierLabel(t) {
+  return { excellent: '✅ 60+ FPS', good: '⚠️ 30-60 FPS', bad: '❌ <30 FPS', unrated: '📊 Sin datos' }[t];
+}
+function tierClass(t) {
+  return { excellent: 'tier-excellent', good: 'tier-good', bad: 'tier-bad', unrated: 'tier-unrated' }[t];
+}
+
+function renderStars(score) {
+  if (!score) return '<span style="color:var(--muted);font-size:11px">Sin puntuación</span>';
+  const full = Math.round(score / 2);
+  let html = '';
+  for (let i = 1; i <= 5; i++) {
+    html += `<span class="star ${i <= full ? 'filled' : 'empty'}">★</span>`;
+  }
+  return html;
+}
+
+function filteredGames() {
+  return GAMES.filter(g => {
+    const matchFilter = currentFilter === 'all' || g.tier === currentFilter;
+    const matchSearch = g.name.toLowerCase().includes(currentSearch.toLowerCase()) ||
+                        g.genre.toLowerCase().includes(currentSearch.toLowerCase());
+    return matchFilter && matchSearch;
+  });
+}
+
+function renderGrid() {
+  const games = filteredGames();
+  const grid = document.getElementById('gamesGrid');
+  const empty = document.getElementById('emptyState');
+  const info = document.getElementById('resultInfo');
+
+  if (!games.length) {
+    grid.innerHTML = '';
+    empty.style.display = 'block';
+    info.textContent = '';
+    return;
+  }
+  empty.style.display = 'none';
+  info.innerHTML = `Mostrando <b>${games.length}</b> juegos`;
+
+  grid.innerHTML = games.map(g => {
+    const score = getScore(g.name);
+    const scoreHtml = score
+      ? `<div class="score-num">${score.toFixed(1)}</div>`
+      : '<span style="color:var(--muted);font-size:11px">N/D</span>';
+    return `
+    <div class="game-card" onclick="openModal('${g.name.replace(/'/g, "\\'")}')">
+      <div class="card-thumb">
+        <span>${g.emoji}</span>
+        <span class="tier-badge ${tierClass(g.tier)}">${tierLabel(g.tier)}</span>
+      </div>
+      <div class="card-body">
+        <div class="card-title">${g.name}</div>
+        <div class="card-genre">${g.genre}</div>
+        <div class="card-score">
+          <div class="stars">${renderStars(score)}</div>
+          ${scoreHtml}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── MODAL ─────────────────────────────────────────────
+async function openModal(name) {
+  const game = GAMES.find(g => g.name === name);
+  if (!game) return;
+
+  const score = getScore(name);
+  const overlay = document.getElementById('modalOverlay');
+  overlay.classList.add('open');
+
+  // Set static content
+  document.getElementById('modalIcon').innerHTML = `<span style="font-size:28px">${game.emoji}</span>`;
+  document.getElementById('modalTitle').textContent = game.name;
+
+  const tagsHtml = `
+    <span class="tag genre-tag">${game.genre}</span>
+    <span class="tag ${tierClass(game.tier)}">${tierLabel(game.tier)}</span>
+    ${game.fps !== '--' ? `<span class="tag">${game.fps} en tu PC</span>` : ''}
+  `;
+  document.getElementById('modalTags').innerHTML = tagsHtml;
+
+  // Score
+  if (score) {
+    document.getElementById('modalScore').textContent = score.toFixed(1);
+    document.getElementById('modalScore').style.color = scoreColor(score);
+    document.getElementById('modalVerdict').textContent = verdictText(score);
+    const bar = document.getElementById('scoreBar');
+    bar.style.width = '0%';
+    bar.style.background = scoreColor(score);
+    setTimeout(() => { bar.style.width = `${(score / 10) * 100}%`; }, 100);
+  } else {
+    document.getElementById('modalScore').textContent = '--';
+    document.getElementById('modalVerdict').textContent = 'Sin puntuación registrada';
+    document.getElementById('scoreBar').style.width = '0%';
+  }
+
+  // FPS badge
+  const fpsBadge = document.getElementById('fpsBadge');
+  fpsBadge.textContent = game.fps;
+  fpsBadge.style.background = {
+    excellent: 'rgba(61,220,132,.15)',
+    good: 'rgba(245,197,66,.15)',
+    bad: 'rgba(255,92,92,.15)',
+    unrated: 'rgba(122,131,153,.1)',
+  }[game.tier];
+  fpsBadge.style.color = {
+    excellent: 'var(--green)', good: 'var(--yellow)',
+    bad: 'var(--red)', unrated: 'var(--muted)',
+  }[game.tier];
+
+  // Load AI description
+  const content = document.getElementById('modalContent');
+
+  if (loadedGames.has(name)) {
+    content.innerHTML = loadedGames.get(name);
+    return;
+  }
+
+  content.innerHTML = `<div class="loading-state"><div class="spinner"></div>Generando descripción con IA...</div>`;
+
+  try {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6",
+        max_tokens: 1000,
+        system: `Eres un experto en videojuegos. Responde SOLO en JSON válido, sin markdown, sin texto extra.
+El formato exacto es:
+{
+  "descripcion": "3-4 oraciones en español sobre de qué trata el juego, su atmósfera y por qué es especial",
+  "desarrollador": "Nombre del desarrollador o 'Desconocido'",
+  "anio": "Año de lanzamiento o 'Desconocido'",
+  "jugadores": "Un jugador / Multijugador / Co-op 2-4 jugadores / etc",
+  "duracion": "Duración aproximada para completarlo, ej: '8-10 horas' o 'Infinito'",
+  "nota_rendimiento": "Una frase sobre cómo corre en hardware integrado AMD Vega 11 con las FPS indicadas"
+}`,
+        messages: [{
+          role: "user",
+          content: `Juego: "${name}"\nGénero: ${game.genre}\nFPS en Ryzen 5 3400G Vega 11: ${game.fps}`
+        }]
+      })
+    });
+
+    const data = await response.json();
+    const text = data.content?.map(b => b.text || '').join('') || '';
+    const clean = text.replace(/```json|```/g, '').trim();
+    const info = JSON.parse(clean);
+
+    const perfColor = game.tier === 'excellent' ? 'rgba(61,220,132,.06)' :
+                      game.tier === 'good' ? 'rgba(245,197,66,.06)' : 'rgba(255,92,92,.06)';
+    const perfBorder = game.tier === 'excellent' ? 'rgba(61,220,132,.2)' :
+                       game.tier === 'good' ? 'rgba(245,197,66,.2)' : 'rgba(255,92,92,.2)';
+
+    const html = `
+      <p class="modal-description">${info.descripcion}</p>
+      <div class="modal-highlights">
+        <div class="highlight-item">
+          <div class="highlight-label">Desarrollador</div>
+          <div class="highlight-value">${info.desarrollador}</div>
+        </div>
+        <div class="highlight-item">
+          <div class="highlight-label">Año</div>
+          <div class="highlight-value">${info.anio}</div>
+        </div>
+        <div class="highlight-item">
+          <div class="highlight-label">Jugadores</div>
+          <div class="highlight-value">${info.jugadores}</div>
+        </div>
+        <div class="highlight-item">
+          <div class="highlight-label">Duración aprox.</div>
+          <div class="highlight-value">${info.duracion}</div>
+        </div>
+      </div>
+      <div class="perf-section" style="background:${perfColor};border-color:${perfBorder}">
+        <div class="perf-title">🖥️ Rendimiento en tu PC</div>
+        <div class="perf-text">${info.nota_rendimiento}</div>
+      </div>
+    `;
+
+    loadedGames.set(name, html);
+    content.innerHTML = html;
+
+  } catch (err) {
+    content.innerHTML = `<p style="color:var(--muted);font-size:14px">No se pudo cargar la descripción. Intenta de nuevo.</p>`;
+  }
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+}
+
+// ── EVENTS ────────────────────────────────────────────
+document.getElementById('modalClose').addEventListener('click', closeModal);
+document.getElementById('modalOverlay').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeModal();
+});
+
+document.getElementById('searchInput').addEventListener('input', e => {
+  currentSearch = e.target.value;
+  renderGrid();
+});
+
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentFilter = btn.dataset.filter;
+    renderGrid();
+  });
+});
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+});
+
+// ── INIT ─────────────────────────────────────────────
+document.getElementById('totalCount').textContent = GAMES.length;
+renderGrid();
+</script>
+</body>
+</html>
